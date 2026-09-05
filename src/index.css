@@ -1,0 +1,219 @@
+/* Giá trị màu lấy đúng từ build-web/src/assets/scss/abstracts/_variables.scss
+- không đoán, đọc trực tiếp file gốc. Không theo prefers-color-scheme (OS) -
+chỉ theo cookie theme_mode, set qua data-theme ở main.tsx trước khi React
+render (build-web cũng không theo OS, luôn mặc định light). */
+:root {
+  --color-primary: #2563a6;
+  --color-page-bg: #fcfafc;
+  --color-card-bg: #ffffff;
+  --color-text: #1f2329;
+  --color-text-secondary: #6b7280;
+  --color-border: #e8eaed;
+  --radius-md: 12px;
+}
+:root[data-theme='dark'] {
+  --color-page-bg: #101215;
+  --color-card-bg: #1a1c20;
+  --color-text: #e8e9eb;
+  --color-text-secondary: #9a9fa6;
+  --color-border: #2a2d31;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+body {
+  background: var(--color-page-bg);
+  color: var(--color-text);
+  font-family: -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
+
+.page {
+  position: relative;
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-page-bg);
+  padding: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.page::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('./assets/animation-svg.svg');
+  background-repeat: repeat;
+  background-size: 340px;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1000px;
+  min-height: 600px;
+  background: var(--color-card-bg);
+  border-radius: var(--radius-md);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  display: flex;
+  margin: auto;
+  border: 1px solid var(--color-border);
+}
+@media (max-width: 768px) {
+  .card {
+    min-height: unset;
+  }
+}
+
+.formSide {
+  flex: 1;
+  min-width: 0;
+  padding: 48px 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+@media (max-width: 576px) {
+  .formSide {
+    padding: 32px 24px;
+  }
+}
+.formInner {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+}
+.logo {
+  height: 36px;
+  margin-bottom: 24px;
+  display: block;
+}
+.footer {
+  display: block;
+  margin-top: 32px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.illustrationSide {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 48px 44px 0;
+  background: linear-gradient(160deg, var(--color-primary) 0%, #1b4c86 55%, #143c6b 100%);
+}
+.illustrationSide::before {
+  content: '';
+  position: absolute;
+  top: -140px;
+  right: -120px;
+  width: 340px;
+  height: 340px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  pointer-events: none;
+}
+.illustrationSide::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('./assets/animation-svg.svg');
+  background-size: 260px;
+  opacity: 0.07;
+  pointer-events: none;
+}
+@media (max-width: 768px) {
+  .illustrationSide {
+    display: none;
+  }
+}
+.illustrationCopy {
+  position: relative;
+  z-index: 1;
+  max-width: 400px;
+}
+.illustrationCopy h2 {
+  color: #fff;
+  margin: 0 0 12px;
+  font-size: 24px;
+  line-height: 1.35;
+  font-weight: 700;
+}
+.illustrationCopy p {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+.illustrationAnim {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  /* Lật ngang animation cho nhân vật quay về phía form - đúng bản gốc. */
+  transform: scaleX(-1);
+}
+
+/* Toast "Đăng nhập thành công" - copy nguyên từ
+build-web/src/modules/auth/scss/login.module.scss (.success-notice/
+.success-icon/.success-bar...). antd đặt icon custom absolute ở
+inset-inline-start 24px, message/description mặc định chỉ chừa margin đủ cho
+icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới margin. */
+.success-notice .ant-notification-notice-message,
+.success-notice .ant-notification-notice-description {
+  margin-inline-start: 44px !important;
+}
+.success-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(83, 195, 27, 0.14);
+  color: #53c31b;
+}
+.success-subtitle {
+  margin: 2px 0 8px;
+  color: var(--color-text-secondary);
+}
+.success-bar {
+  width: 100%;
+  height: 3px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(37, 99, 166, 0.14);
+}
+.success-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #2563a6, #3fa9ff);
+  animation: success-bar-fill 0.6s linear forwards;
+}
+@keyframes success-bar-fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
