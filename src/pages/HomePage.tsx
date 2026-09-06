@@ -40,12 +40,12 @@ export default function HomePage() {
         ) : (
           <div className="ssoAppGrid">
             {apps.map((app) => (
-              <a key={app.key} href={app.url} className="ssoAppCard">
+              <a key={app.app_id} href={app.url || undefined} className="ssoAppCard">
                 <span className="ssoAppCard-icon" style={{ background: app.color }}>
-                  {(app.name.trim() || app.key).charAt(0).toUpperCase()}
+                  {(app.app_name.trim() || app.app_key).charAt(0).toUpperCase()}
                 </span>
                 <span className="ssoAppCard-body">
-                  <span className="ssoAppCard-name">{app.name || app.key}</span>
+                  <span className="ssoAppCard-name">{app.app_name || app.app_key}</span>
                   <span className="ssoAppCard-desc">{app.description}</span>
                   <span className="ssoAppCard-action">Mở ứng dụng <ArrowRightOutlined /></span>
                 </span>

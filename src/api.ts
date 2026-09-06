@@ -63,6 +63,9 @@ export interface Me {
   email: string | null;
   phone_number: string | null;
   position_name: string | null;
+  // true nếu user có role "sa" (Quản trị hệ thống) - dùng để hiện/ẩn tab
+  // "Quản lý ứng dụng". Tính lại mỗi lần gọi ở BE, không tin JWT cache được.
+  is_admin: boolean;
 }
 
 export const getMe = () => get<Me>('me');
@@ -81,6 +84,7 @@ export interface AccountProfile {
   position_name: string | null;
   department_name: string | null;
   branch_name: string | null;
+  is_admin: boolean;
 }
 export const getProfile = () => get<AccountProfile>('account/profile');
 
@@ -113,14 +117,51 @@ export async function uploadAvatarRequest(
 }
 
 // ---- Apps ----
+// Trước đây là config tĩnh (src/config/apps.ts bên api-sso), giờ lấy từ bảng
+// a_app + phân quyền a_app_access - xem "Quản lý ứng dụng" (AppsAdminPanel).
 export interface SsoApp {
-  key: string;
-  name: string;
-  description: string;
+  app_id: string;
+  app_key: string;
+  app_name: string;
+  description: string | null;
   url: string;
   color: string;
 }
 export const getApps = () => get<SsoApp[]>('apps');
+
+// ---- Quản lý ứng dụng (chỉ admin - BE tự chặn 403 nếu gọi nhầm) ----
+export interface AdminApp extends SsoApp {
+  sort_order: number;
+  access_count: number;
+}
+export const getAdminApps = () => get<AdminApp[]>('admin/apps');
+
+export interface UpsertAppPayload {
+  app_id?: string | null;
+  app_key: string;
+  app_name: string;
+  description?: string;
+  url?: string;
+  color?: string;
+  sort_order?: number;
+}
+export const upsertAppRequest = (payload: UpsertAppPayload) =>
+  post<{ success: boolean; message: string; app_id: string }>('admin/apps', payload);
+
+export const deleteAppRequest = (app_id: string) =>
+  post<{ success: boolean; message: string }>('admin/apps/delete', { app_id });
+
+export interface AdminUser {
+  user_id: string;
+  user_name: string;
+  full_name: string;
+  position_name: string | null;
+}
+export const getAdminUsers = () => get<AdminUser[]>('admin/users');
+export const getAppAccessRequest = (app_id: string) =>
+  get<AdminUser[]>(`admin/apps/${app_id}/access`);
+export const setAppAccessRequest = (app_id: string, user_ids: string[]) =>
+  post<{ success: boolean; message: string }>(`admin/apps/${app_id}/access`, { user_ids });
 
 // ---- Sessions ----
 export interface SsoSession {
