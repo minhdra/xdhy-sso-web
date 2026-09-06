@@ -1,6 +1,6 @@
 /* Giá trị màu lấy đúng từ build-web/src/assets/scss/abstracts/_variables.scss
 - không đoán, đọc trực tiếp file gốc. Không theo prefers-color-scheme (OS) -
-chỉ theo cookie theme_mode, set qua data-theme ở main.tsx trước khi React
+chỉ theo cookie xdhy_theme_mode, set qua data-theme ở main.tsx trước khi React
 render (build-web cũng không theo OS, luôn mặc định light). */
 :root {
   --color-primary: #2563a6;
@@ -242,19 +242,6 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
   display: flex;
   flex-direction: column;
   overflow: hidden;
-}
-.ssoHomeShell::before {
-  content: '';
-  position: fixed;
-  inset: 60px 0 0;
-  background-image: url('./assets/animation-svg.svg');
-  background-repeat: repeat;
-  background-size: 360px;
-  opacity: 0.16;
-  pointer-events: none;
-}
-:root[data-theme='dark'] .ssoHomeShell::before {
-  opacity: 0.07;
 }
 
 .ssoHeader {

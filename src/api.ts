@@ -45,6 +45,7 @@ export interface LoginResponseUser {
 }
 
 export const loginRequest = (payload: LoginPayload) => post<LoginResponseUser>('login', payload);
+export const refreshRequest = () => post<{ success: boolean }>('refresh');
 export const logoutRequest = () => post<{ success: boolean }>('logout');
 export const forgotPasswordRequest = (email: string) =>
   post<{ message: string; success: boolean }>('forgot-password', { email });

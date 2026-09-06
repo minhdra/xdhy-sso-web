@@ -1,20 +1,29 @@
 import { type ThemeConfig, theme as antTheme } from 'antd';
 
-// Đồng bộ theme với app chính (build-web) qua cookie `theme_mode` (không
+// Đồng bộ theme với app chính qua cookie `xdhy_theme_mode` (không
 // httpOnly, domain cha dùng chung) - KHÔNG tự đoán theo prefers-color-scheme
 // của OS (build-web cũng vậy, luôn mặc định light trừ khi user đã bấm dark).
 export type ThemeMode = 'light' | 'dark';
 
-const COOKIE_KEY = 'theme_mode';
+const COOKIE_KEY = 'xdhy_theme_mode';
+const LEGACY_COOKIE_KEY = 'theme_mode';
 const COOKIE_DOMAIN = import.meta.env.VITE_COOKIE_DOMAIN ?? '';
-// localStorage riêng của sso-web - giống build-web dùng localStorage làm
+// localStorage riêng của sso-web dùng làm fallback khi chạy local.
 // nguồn chính cho việc TỰ nhớ theme của chính nó (cookie domain cha có thể
 // rỗng lúc dev local -> không lưu qua origin được, nhưng localStorage luôn
 // lưu được trong cùng origin sso-web).
 const STORAGE_KEY = 'sso_theme_mode';
 
 function readCookie(): ThemeMode | null {
-  const match = document.cookie.match(/(?:^|;\s*)theme_mode=([^;]*)/);
+  const match = document.cookie.match(/(?:^|;\s*)xdhy_theme_mode=([^;]*)/);
+  if (!match) return null;
+  return decodeURIComponent(match[1]) === 'dark' ? 'dark' : 'light';
+}
+
+function readLegacyCookie(): ThemeMode | null {
+  const match = document.cookie.match(
+    new RegExp(`(?:^|;\\s*)${LEGACY_COOKIE_KEY}=([^;]*)`),
+  );
   if (!match) return null;
   return decodeURIComponent(match[1]) === 'dark' ? 'dark' : 'light';
 }
@@ -31,11 +40,10 @@ function readStorage(): ThemeMode | null {
 // Cookie là nguồn dùng chung giữa các origin, nên phải được ưu tiên. Storage
 // chỉ fallback cho môi trường local khi không cấu hình được domain cookie.
 export function getThemeModeFromCookie(): ThemeMode {
-  return readCookie() ?? readStorage() ?? 'light';
+  return readCookie() ?? readLegacyCookie() ?? readStorage() ?? 'light';
 }
 
-// Ghi cả localStorage (tự nhớ trong sso-web) lẫn cookie domain cha (khớp
-// build-web publicCookieService, để 2 app đồng bộ theme qua lại).
+// Ghi cả localStorage và cookie domain cha để hai app đồng bộ qua lại.
 export function setThemeModeCookie(mode: ThemeMode) {
   try {
     window.localStorage.setItem(STORAGE_KEY, mode);

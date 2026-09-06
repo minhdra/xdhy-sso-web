@@ -7,6 +7,7 @@ import {
   Form,
   Input,
   Result,
+  Spin,
   Typography,
   theme as antdTheme,
 } from 'antd';
@@ -15,7 +16,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import loginBadge from '../assets/login-badge.json';
-import { loginRequest, forgotPasswordRequest } from '../api';
+import { forgotPasswordRequest, getMe, loginRequest, refreshRequest } from '../api';
 import { RULES_FORM } from '../validator';
 
 const BRAND_NAME = 'XDHY';
@@ -53,14 +54,57 @@ export default function LoginPage() {
   const [forgotForm] = Form.useForm();
   const [loginLoading, setLoginLoading] = useState(false);
   const [forgotLoading, setForgotLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
+  const sessionCheckStarted = useRef(false);
 
   const redirectTo = useMemo(
     () => safeRedirectTarget(new URLSearchParams(window.location.search).get('redirect')),
     [],
   );
 
+  useEffect(() => {
+    if (sessionCheckStarted.current) return;
+    sessionCheckStarted.current = true;
+
+    const continueToApp = () => {
+      if (!redirectTo) {
+        navigate('/', { replace: true });
+      } else if (redirectTo.startsWith('/')) {
+        navigate(redirectTo, { replace: true });
+      } else {
+        window.location.replace(redirectTo);
+      }
+    };
+
+    const checkSession = async () => {
+      try {
+        const me = await getMe();
+        if (me.ok) {
+          continueToApp();
+          return;
+        }
+
+        // Access token có thể vừa hết hạn nhưng refresh token vẫn hợp lệ.
+        // Cấp lại access token rồi kiểm tra lần cuối trước khi hiện form.
+        if (me.status === 401 || me.status === 403) {
+          const refreshed = await refreshRequest();
+          if (refreshed.ok && (await getMe()).ok) {
+            continueToApp();
+            return;
+          }
+        }
+      } catch {
+        // Lỗi mạng hoặc không có phiên: vẫn cho phép người dùng đăng nhập tay.
+      }
+      setCheckingSession(false);
+    };
+
+    void checkSession();
+  }, [navigate, redirectTo]);
+
   const illustrationRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    if (checkingSession) return;
     if (!illustrationRef.current) return;
     const anim = lottie.loadAnimation({
       container: illustrationRef.current,
@@ -71,7 +115,7 @@ export default function LoginPage() {
     });
     anim.setSpeed(0.5);
     return () => anim.destroy();
-  }, []);
+  }, [checkingSession]);
 
   const handleLogin = async (values: { username: string; password: string; remember?: boolean }) => {
     setLoginLoading(true);
@@ -131,6 +175,14 @@ export default function LoginPage() {
       setForgotLoading(false);
     }
   };
+
+  if (checkingSession) {
+    return (
+      <div className="page">
+        <Spin size="large" tip="Đang kiểm tra phiên đăng nhập" />
+      </div>
+    );
+  }
 
   return (
     <div className="page">
