@@ -3,6 +3,7 @@
 interface ImportMetaEnv {
   readonly VITE_ALLOWED_REDIRECT_SUFFIX?: string;
   readonly VITE_GATEWAY_URL?: string;
+  readonly VITE_COOKIE_DOMAIN?: string;
 }
 
 interface ImportMeta {

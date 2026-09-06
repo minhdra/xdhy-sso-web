@@ -4,19 +4,28 @@ chỉ theo cookie theme_mode, set qua data-theme ở main.tsx trước khi React
 render (build-web cũng không theo OS, luôn mặc định light). */
 :root {
   --color-primary: #2563a6;
+  --color-primary-soft: #e5f0f6;
   --color-page-bg: #fcfafc;
   --color-card-bg: #ffffff;
   --color-text: #1f2329;
   --color-text-secondary: #6b7280;
   --color-border: #e8eaed;
   --radius-md: 12px;
+  --radius-lg: 16px;
+  --shell-bg: linear-gradient(165deg, #f1f4f9 0%, #e7ecf3 100%);
+  --shadow-card: 0 4px 16px 0 rgba(20, 30, 40, 0.06);
+  --shadow-hover: 0 12px 32px 0 rgba(20, 30, 40, 0.12);
 }
 :root[data-theme='dark'] {
+  --color-primary-soft: rgba(37, 99, 166, 0.22);
   --color-page-bg: #101215;
   --color-card-bg: #1a1c20;
   --color-text: #e8e9eb;
   --color-text-secondary: #9a9fa6;
   --color-border: #2a2d31;
+  --shell-bg: linear-gradient(165deg, #191d23 0%, #121417 100%);
+  --shadow-card: 0 4px 16px 0 rgba(0, 0, 0, 0.35);
+  --shadow-hover: 0 12px 32px 0 rgba(0, 0, 0, 0.5);
 }
 
 * {
@@ -216,4 +225,541 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
   to {
     width: 100%;
   }
+}
+
+
+/* ============================================================
+   Shell trang đã đăng nhập (home, account) - đồng bộ "cảm giác"
+   với build-web: bo góc 16, shadow mềm, nền gradient rất nhẹ.
+   ============================================================ */
+.ssoShell {
+  min-height: 100vh;
+  background: var(--shell-bg);
+  color: var(--color-text);
+}
+.ssoHomeShell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.ssoHomeShell::before {
+  content: '';
+  position: fixed;
+  inset: 60px 0 0;
+  background-image: url('./assets/animation-svg.svg');
+  background-repeat: repeat;
+  background-size: 360px;
+  opacity: 0.16;
+  pointer-events: none;
+}
+:root[data-theme='dark'] .ssoHomeShell::before {
+  opacity: 0.07;
+}
+
+.ssoHeader {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in srgb, var(--color-card-bg) 88%, transparent);
+  backdrop-filter: saturate(180%) blur(8px);
+  border-bottom: 1px solid var(--color-border);
+}
+.ssoHeader-inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 28px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ssoHeader-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.ssoHeader-brand:hover {
+  background: var(--color-primary-soft);
+}
+.ssoHeader-brand:focus-visible,
+.ssoHeader-user:focus-visible,
+.ssoAccount-nav button:focus-visible,
+.ssoAppCard:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
+  outline-offset: 2px;
+}
+.ssoHeader-brand img {
+  height: 26px;
+}
+.ssoHeader-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.ssoHeader-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 46px;
+  padding: 0 10px 0 4px;
+  border: 0;
+  background: none;
+  border-radius: 999px;
+  cursor: pointer;
+  max-width: 260px;
+  transition: background 0.12s;
+}
+.ssoHeader-user:hover {
+  background: var(--color-primary-soft);
+}
+.ssoHeader-userText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  line-height: 1.2;
+}
+.ssoHeader-userName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ssoHeader-userRole {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 560px) {
+  .ssoHeader-userText {
+    display: none;
+  }
+  .ssoHeader-inner {
+    padding: 0 16px;
+  }
+}
+
+/* ===== Trang chủ - danh sách app ===== */
+.ssoHome {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 56px 28px 96px;
+}
+.ssoFooter {
+  position: relative;
+  z-index: 1;
+  border-top: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-card-bg) 82%, transparent);
+  backdrop-filter: blur(8px);
+}
+.ssoFooter-inner {
+  max-width: 1080px;
+  min-height: 70px;
+  margin: 0 auto;
+  padding: 18px 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  color: var(--color-text-secondary);
+  font-size: 12.5px;
+}
+.ssoFooter nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+.ssoFooter a {
+  color: var(--color-text);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.18s ease;
+}
+.ssoFooter a:hover {
+  color: var(--color-primary);
+}
+.ssoHome-title {
+  font-size: 26px !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em;
+  margin-bottom: 6px !important;
+}
+.ssoHome-sub {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 32px;
+}
+.ssoHome-loading {
+  display: grid;
+  place-items: center;
+  padding: 72px 0;
+}
+.ssoAppGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+@media (max-width: 820px) {
+  .ssoAppGrid {
+    grid-template-columns: 1fr;
+  }
+  .ssoHome {
+    padding: 36px 16px 72px;
+  }
+  .ssoAppCard {
+    min-height: 132px;
+  }
+}
+.ssoAppCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  min-height: 156px;
+  padding: 22px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-card-bg);
+  box-shadow: var(--shadow-card);
+  text-decoration: none;
+  color: var(--color-text);
+  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+.ssoAppCard:hover {
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--color-primary) 55%, var(--color-border));
+  background: color-mix(in srgb, var(--color-card-bg) 94%, var(--color-primary));
+}
+.ssoAppCard-icon {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  box-shadow: 0 5px 14px -4px rgba(0, 0, 0, 0.35);
+}
+.ssoAppCard-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  min-height: 110px;
+}
+.ssoAppCard-name {
+  font-weight: 700;
+  font-size: 14.5px;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text);
+  transition: color 0.2s ease;
+}
+.ssoAppCard:hover .ssoAppCard-name {
+  color: var(--color-primary);
+}
+.ssoAppCard-desc {
+  margin-top: 2px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ssoAppCard-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: auto;
+  color: var(--color-primary);
+  font-size: 12.5px;
+  font-weight: 650;
+}
+.ssoAppCard-action .anticon {
+  transition: transform 0.2s ease;
+}
+.ssoAppCard:hover .ssoAppCard-action .anticon {
+  transform: translateX(3px);
+}
+
+/* ===== Quản lý tài khoản ===== */
+.ssoAccount {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 44px 28px 96px;
+}
+.ssoAccount-title {
+  font-size: 25px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+}
+.ssoAccount-sub {
+  color: var(--color-text-secondary);
+  font-size: 13.5px;
+  margin: 0 0 28px;
+}
+.ssoAccount-body {
+  display: grid;
+  grid-template-columns: 238px minmax(0, 1fr);
+  gap: 30px;
+  align-items: start;
+}
+.ssoAccount-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  position: sticky;
+  top: 84px;
+}
+.ssoAccount-nav button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 7px 16px 7px 7px;
+  border: 0;
+  background: none;
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+.ssoAccount-nav button:hover {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  transform: translateX(2px);
+}
+.ssoAccount-nav button.is-active {
+  background: var(--color-primary-soft);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.ssoAccount-navIcon {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 18px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+}
+.ssoAccount-panel {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 30px 34px 36px;
+  min-height: 320px;
+}
+.ssoPanel h2 {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  margin: 0 0 20px;
+}
+.ssoPanel-hint {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  margin: 8px 0 0;
+}
+.ssoPanel-avatar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 30px 20px 20px;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-primary-soft) 56%, var(--color-card-bg));
+}
+.ssoPanel-subhead {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-text-secondary);
+  margin: 28px 0 14px;
+}
+
+.ssoProfile-summary {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(320px, 1.1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.ssoSessionGroups {
+  display: grid;
+  gap: 16px;
+  margin-top: 22px;
+}
+.ssoSessionGroup {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-card-bg);
+}
+.ssoSessionGroup-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 16px;
+  background: color-mix(in srgb, var(--color-primary-soft) 58%, var(--color-card-bg));
+}
+.ssoSessionGroup-header > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ssoSessionGroup-header strong {
+  color: var(--color-text);
+  font-size: 13.5px;
+}
+.ssoSessionGroup-header small {
+  color: var(--color-text-secondary);
+  font-size: 11.5px;
+}
+.ssoSessionGroup-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 16px;
+}
+.ssoSessionGroup .ant-list-item {
+  padding-inline: 16px;
+}
+.ssoProfile-other {
+  min-width: 0;
+}
+.ssoProfile-other .ssoPanel-subhead {
+  margin-top: 0;
+}
+
+/* Danh sách thông tin chỉ-đọc kiểu Google */
+.ssoInfoList {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.ssoInfoRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 12px 16px;
+  font-size: 13.5px;
+}
+.ssoInfoRow + .ssoInfoRow {
+  border-top: 1px solid var(--color-border);
+}
+.ssoInfoRow-label {
+  color: var(--color-text-secondary);
+  flex: none;
+}
+.ssoInfoRow-value {
+  color: var(--color-text);
+  font-weight: 500;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.ssoPanel-form {
+  max-width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 18px;
+  align-items: end;
+}
+.ssoPanel-form .ant-form-item {
+  margin-bottom: 18px;
+}
+.ssoPanel-submit {
+  justify-self: start;
+}
+.ssoPanel-submit .ant-btn[type='submit'] {
+  width: max-content;
+  min-width: 132px;
+}
+
+@media (max-width: 780px) {
+  .ssoAccount-body {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .ssoAccount-nav {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .ssoAccount-nav button span:last-child {
+    white-space: nowrap;
+  }
+  .ssoAccount-panel {
+    padding: 22px;
+  }
+  .ssoProfile-summary,
+  .ssoPanel-form {
+    grid-template-columns: 1fr;
+  }
+  .ssoPanel-submit .ant-form-item-label {
+    display: none;
+  }
+  .ssoPanel-avatar {
+    min-height: 118px;
+  }
+  .ssoFooter-inner {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    padding-inline: 16px;
+  }
+  .ssoFooter nav {
+    gap: 14px;
+  }
+}
+
+/* Placeholder: đậm + rõ như build-web (_antd-overrides.scss) - antd mặc định
+   quá nhạt (~25% đen), khó đọc. */
+input::placeholder,
+textarea::placeholder,
+.ant-input::placeholder,
+.ant-input-outlined::placeholder,
+.ant-select-selection-placeholder,
+.ant-picker-input > input::placeholder {
+  color: var(--color-text-secondary) !important;
+  font-weight: 500 !important;
+  opacity: 1 !important;
 }

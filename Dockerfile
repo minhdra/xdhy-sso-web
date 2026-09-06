@@ -15,6 +15,11 @@ ENV VITE_ALLOWED_REDIRECT_SUFFIX=$VITE_ALLOWED_REDIRECT_SUFFIX
 # riêng), gọi API cross-origin thật, không còn same-origin với gateway nữa.
 ARG VITE_GATEWAY_URL
 ENV VITE_GATEWAY_URL=$VITE_GATEWAY_URL
+# Domain cha dùng chung - khi bấm toggle sáng/tối, ghi cookie theme_mode ở
+# domain này để đồng bộ theme với build-web (và ngược lại). Rỗng -> cookie
+# host-only, toggle vẫn chạy nhưng không lan sang app khác.
+ARG VITE_COOKIE_DOMAIN
+ENV VITE_COOKIE_DOMAIN=$VITE_COOKIE_DOMAIN
 RUN pnpm run build
 
 FROM nginx:1.27-alpine AS production-stage

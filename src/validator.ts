@@ -16,6 +16,13 @@ export const RULES_FORM = {
       message: 'Email không đúng định dạng',
     },
   ] satisfies FormRule[],
+  // Số điện thoại VN, không bắt buộc - chỉ check định dạng khi có nhập.
+  phone: [
+    {
+      pattern: /^0\d{9,10}$/,
+      message: 'Số điện thoại không hợp lệ',
+    },
+  ] satisfies FormRule[],
   // Khớp đúng điều kiện backend check (authController.resetPasswordConfirm:
   // newPassword.length < 6 -> 400) - validate trước ở FE cho UX tốt hơn,
   // không thay cho check ở backend.

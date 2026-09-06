@@ -12,6 +12,7 @@ import {
 } from 'antd';
 import lottie from 'lottie-web/build/player/lottie_light';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import loginBadge from '../assets/login-badge.json';
 import { loginRequest, forgotPasswordRequest } from '../api';
@@ -38,9 +39,10 @@ function safeRedirectTarget(raw: string | null): string | null {
   return null;
 }
 
-type ViewMode = 'login' | 'forgot' | 'forgotSent' | 'done';
+type ViewMode = 'login' | 'forgot' | 'forgotSent';
 
 export default function LoginPage() {
+  const navigate = useNavigate();
   const { token } = antdTheme.useToken();
   // notification qua App.useApp() (không phải gọi tĩnh `notification.xxx()`)
   // - static call KHÔNG ăn theme của ConfigProvider, luôn ra light dù đang
@@ -51,8 +53,6 @@ export default function LoginPage() {
   const [forgotForm] = Form.useForm();
   const [loginLoading, setLoginLoading] = useState(false);
   const [forgotLoading, setForgotLoading] = useState(false);
-  const [doneUserId, setDoneUserId] = useState<string | null>(null);
-  const [doneRemember, setDoneRemember] = useState(false);
 
   const redirectTo = useMemo(
     () => safeRedirectTarget(new URLSearchParams(window.location.search).get('redirect')),
@@ -103,15 +103,12 @@ export default function LoginPage() {
         ),
         duration: 0.6,
       });
-      if (redirectTo) {
-        setTimeout(() => {
-          window.location.href = redirectTo;
-        }, 400);
-        return;
-      }
-      setDoneUserId(res.data.user_id ?? null);
-      setDoneRemember(remember);
-      setView('done');
+      // Có redirect (thường là URL build-web cross-origin) -> nav cứng.
+      // Không có -> vào trang chủ SSO (danh sách app).
+      setTimeout(() => {
+        if (redirectTo) window.location.href = redirectTo;
+        else navigate('/', { replace: true });
+      }, 400);
     } catch {
       notification.error({ message: 'Lỗi kết nối tới server.' });
     } finally {
@@ -140,19 +137,7 @@ export default function LoginPage() {
       <div className="card">
         <div className="formSide">
           <div className="formInner">
-            {view === 'done' ? (
-              <Result
-                status="success"
-                title="Đăng nhập thành công"
-                subTitle={
-                  <>
-                    user_id: {doneUserId}
-                    <br />
-                    {doneRemember ? 'Đã ghi nhớ, phiên 30 ngày' : 'Chỉ phiên trình duyệt này'}
-                  </>
-                }
-              />
-            ) : view === 'forgotSent' ? (
+            {view === 'forgotSent' ? (
               <Result
                 status="success"
                 title="Đã gửi email"
