@@ -7,7 +7,6 @@ import {
   Form,
   Input,
   Result,
-  Spin,
   Typography,
   theme as antdTheme,
 } from 'antd';
@@ -17,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 
 import loginBadge from '../assets/login-badge.json';
 import { forgotPasswordRequest, getMe, loginRequest, refreshRequest } from '../api';
+import { PageLoading } from '../components/PageLoading';
 import { RULES_FORM } from '../validator';
 
 const BRAND_NAME = 'XDHY';
@@ -177,11 +177,7 @@ export default function LoginPage() {
   };
 
   if (checkingSession) {
-    return (
-      <div className="page">
-        <Spin size="large" tip="Đang kiểm tra phiên đăng nhập" />
-      </div>
-    );
+    return <PageLoading />;
   }
 
   return (

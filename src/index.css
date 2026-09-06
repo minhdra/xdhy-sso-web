@@ -28,6 +28,15 @@ render (build-web cũng không theo OS, luôn mặc định light). */
   --shadow-hover: 0 12px 32px 0 rgba(0, 0, 0, 0.5);
 }
 
+/* Nét vẽ trong loading-page.json là đen/trắng cố định (file Lottie, không
+đọc theme của app) - ở dark mode gần như biến mất trên nền tối gần đen.
+invert(1) đảo sáng/tối (đen<->trắng), hue-rotate(180deg) bù lại cho điểm nhấn
+xanh (circle/bar) giữ đúng tông thay vì bị đảo thành cam - xem
+PageLoading.tsx, cùng công thức đã dùng ở build-web. */
+:root[data-theme='dark'] .page-loading-icon {
+  filter: invert(1) hue-rotate(180deg);
+}
+
 * {
   box-sizing: border-box;
 }

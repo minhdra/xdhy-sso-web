@@ -1,8 +1,8 @@
-import { Spin } from 'antd';
 import { useEffect } from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 
 import { useSessionStore } from '../store/session';
+import { PageLoading } from './PageLoading';
 
 // Bọc các route cần đăng nhập (/ và /account). Gọi /me 1 lần lúc mount; chưa
 // xong -> spinner; 401 -> về /login kèm ?redirect để quay lại; ok -> render
@@ -17,11 +17,7 @@ export default function RequireAuth() {
   }, [fetchMe]);
 
   if (status === 'loading') {
-    return (
-      <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center' }}>
-        <Spin size="large" />
-      </div>
-    );
+    return <PageLoading />;
   }
 
   if (status === 'unauthenticated') {
