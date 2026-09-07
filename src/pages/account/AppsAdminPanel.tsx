@@ -7,7 +7,6 @@ import {
   InputNumber,
   Modal,
   Popconfirm,
-  Select,
   Table,
   Tag,
 } from 'antd';
@@ -35,6 +34,41 @@ interface AppFormValues {
   sort_order?: number;
 }
 
+// 1 dòng người dùng trong bảng phân quyền, gắn thêm `positionRowSpan` để gộp
+// ô "Chức vụ" theo nhóm (kiểu bảng Excel group-by) - dòng đầu mỗi nhóm mang
+// rowSpan = số người trong nhóm, các dòng sau trong cùng nhóm mang 0 (antd
+// Table tự ẩn ô đó khi rowSpan=0, xem onCell bên dưới).
+interface AccessRow extends AdminUser {
+  positionRowSpan: number;
+}
+
+const UNASSIGNED_POSITION = 'Chưa gán chức vụ';
+
+// Sort theo chức vụ rồi tên (gom nhóm liền kề bắt buộc để rowSpan đúng - antd
+// merge-cell chỉ hoạt động khi các dòng cùng nhóm nằm sát nhau), rồi gắn
+// rowSpan cho dòng đầu mỗi nhóm.
+const buildAccessRows = (users: AdminUser[]): AccessRow[] => {
+  const sorted = [...users].sort((a, b) => {
+    const posA = a.position_name || UNASSIGNED_POSITION;
+    const posB = b.position_name || UNASSIGNED_POSITION;
+    return posA !== posB
+      ? posA.localeCompare(posB, 'vi')
+      : a.full_name.localeCompare(b.full_name, 'vi');
+  });
+
+  const rows: AccessRow[] = [];
+  for (let i = 0; i < sorted.length; ) {
+    const pos = sorted[i].position_name || UNASSIGNED_POSITION;
+    let j = i;
+    while (j < sorted.length && (sorted[j].position_name || UNASSIGNED_POSITION) === pos) j++;
+    for (let k = i; k < j; k++) {
+      rows.push({ ...sorted[k], positionRowSpan: k === i ? j - i : 0 });
+    }
+    i = j;
+  }
+  return rows;
+};
+
 export default function AppsAdminPanel() {
   const { notification } = AntdApp.useApp();
   const [apps, setApps] = useState<AdminApp[] | null>(null);
@@ -46,6 +80,7 @@ export default function AppsAdminPanel() {
 
   const [accessApp, setAccessApp] = useState<AdminApp | null>(null);
   const [accessUserIds, setAccessUserIds] = useState<string[]>([]);
+  const [accessSearch, setAccessSearch] = useState('');
   const [savingAccess, setSavingAccess] = useState(false);
 
   const loadApps = () => {
@@ -118,6 +153,7 @@ export default function AppsAdminPanel() {
   const openAccess = async (app: AdminApp) => {
     setAccessApp(app);
     setAccessUserIds([]);
+    setAccessSearch('');
     try {
       const res = await getAppAccessRequest(app.app_id);
       if (res.ok) setAccessUserIds(res.data.map((u) => u.user_id));
@@ -145,10 +181,14 @@ export default function AppsAdminPanel() {
     }
   };
 
-  const userOptions = (users ?? []).map((u) => ({
-    value: u.user_id,
-    label: `${u.full_name} (@${u.user_name})${u.position_name ? ' · ' + u.position_name : ''}`,
-  }));
+  const accessSearchLower = accessSearch.trim().toLowerCase();
+  const filteredAccessUsers = (users ?? []).filter(
+    (u) =>
+      !accessSearchLower ||
+      u.full_name.toLowerCase().includes(accessSearchLower) ||
+      u.user_name.toLowerCase().includes(accessSearchLower),
+  );
+  const accessRows = buildAccessRows(filteredAccessUsers);
 
   return (
     <div className="ssoPanel">
@@ -308,21 +348,54 @@ export default function AppsAdminPanel() {
         okText="Lưu"
         cancelText="Huỷ"
         destroyOnClose
+        width={640}
       >
         <p className="ssoPanel-hint" style={{ marginTop: 0 }}>
           Chỉ những người được chọn dưới đây mới thấy ứng dụng này ở trang chủ. Quản trị viên luôn
-          thấy được mọi ứng dụng.
+          thấy được mọi ứng dụng. Đã chọn {accessUserIds.length} người.
         </p>
-        <Select
-          mode="multiple"
-          style={{ width: '100%' }}
-          placeholder="Chọn người được phép truy cập"
-          value={accessUserIds}
-          onChange={setAccessUserIds}
-          options={userOptions}
+        <Input.Search
+          placeholder="Tìm theo tên hoặc tài khoản..."
+          allowClear
+          value={accessSearch}
+          onChange={(e) => setAccessSearch(e.target.value)}
+          style={{ marginBottom: 12 }}
+        />
+        <Table<AccessRow>
+          rowKey="user_id"
+          size="small"
           loading={users === null}
-          optionFilterProp="label"
-          maxTagCount="responsive"
+          dataSource={accessRows}
+          pagination={false}
+          scroll={{ y: 360 }}
+          rowSelection={{
+            selectedRowKeys: accessUserIds,
+            onChange: (keys) => setAccessUserIds(keys as string[]),
+          }}
+          columns={[
+            {
+              title: 'Chức vụ',
+              dataIndex: 'position_name',
+              width: 150,
+              // rowSpan=0 -> antd tự ẩn ô (gộp vào dòng đầu nhóm phía trên).
+              onCell: (row) => ({ rowSpan: row.positionRowSpan }),
+              render: (_, row) => (
+                <span style={{ fontWeight: 600 }}>{row.position_name || UNASSIGNED_POSITION}</span>
+              ),
+            },
+            {
+              title: 'Họ tên',
+              dataIndex: 'full_name',
+            },
+            {
+              title: 'Tài khoản',
+              dataIndex: 'user_name',
+              width: 140,
+              render: (v: string) => (
+                <span style={{ color: 'var(--color-text-secondary)' }}>@{v}</span>
+              ),
+            },
+          ]}
         />
       </Modal>
     </div>
