@@ -797,3 +797,10 @@ textarea::placeholder,
 .ssoPanel-headRow h2 {
   margin: 0 !important;
 }
+
+/* Hàng "chức vụ" trong bảng phân quyền truy cập app (AppsAdminPanel) - nền
+   nhạt để tách khỏi hàng người bên dưới, giống bảng phân quyền công trình
+   của task-web (ProjectMemberTable). */
+.ssoAccessTable-groupRow > td {
+  background: var(--color-primary-soft) !important;
+}

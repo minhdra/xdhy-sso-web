@@ -1,14 +1,19 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined, TeamOutlined } from '@ant-design/icons';
 import {
   App as AntdApp,
+  Avatar,
   Button,
+  Checkbox,
   Form,
   Input,
   InputNumber,
   Modal,
+  Pagination,
   Popconfirm,
+  Space,
   Table,
   Tag,
+  Typography,
 } from 'antd';
 import { useEffect, useState } from 'react';
 
@@ -34,21 +39,21 @@ interface AppFormValues {
   sort_order?: number;
 }
 
-// 1 dòng người dùng trong bảng phân quyền, gắn thêm `positionRowSpan` để gộp
-// ô "Chức vụ" theo nhóm (kiểu bảng Excel group-by) - dòng đầu mỗi nhóm mang
-// rowSpan = số người trong nhóm, các dòng sau trong cùng nhóm mang 0 (antd
-// Table tự ẩn ô đó khi rowSpan=0, xem onCell bên dưới).
-interface AccessRow extends AdminUser {
-  positionRowSpan: number;
-}
+// Bảng "Phân quyền truy cập" gồm 2 loại hàng trộn chung 1 danh sách - hàng
+// "chức vụ" (thanh tiêu đề nhóm, nền nhạt) + hàng "người" (checkbox chọn) -
+// giống cách task-web trình bày bảng thành viên công trình
+// (task-web/src/modules/task/construction-project-permission/components/ProjectMemberTable.tsx),
+// chỉ khác là quyền ở đây chỉ có 2 trạng thái (có/không), không phải nhiều
+// cấp độ - nên dùng checkbox thay vì dropdown "Quyền".
+type AccessRow =
+  | { kind: 'position'; key: string; position_name: string }
+  | { kind: 'user'; key: string; user: AdminUser };
 
 const UNASSIGNED_POSITION = 'Chưa gán chức vụ';
+const ACCESS_PAGE_SIZE = 20;
 
-// Sort theo chức vụ rồi tên (gom nhóm liền kề bắt buộc để rowSpan đúng - antd
-// merge-cell chỉ hoạt động khi các dòng cùng nhóm nằm sát nhau), rồi gắn
-// rowSpan cho dòng đầu mỗi nhóm.
-const buildAccessRows = (users: AdminUser[]): AccessRow[] => {
-  const sorted = [...users].sort((a, b) => {
+const sortByPositionThenName = (users: AdminUser[]): AdminUser[] =>
+  [...users].sort((a, b) => {
     const posA = a.position_name || UNASSIGNED_POSITION;
     const posB = b.position_name || UNASSIGNED_POSITION;
     return posA !== posB
@@ -56,17 +61,30 @@ const buildAccessRows = (users: AdminUser[]): AccessRow[] => {
       : a.full_name.localeCompare(b.full_name, 'vi');
   });
 
+// Chỉ nhận danh sách của ĐÚNG 1 TRANG (đã cắt theo phân trang) - chèn 1 hàng
+// "chức vụ" mỗi khi chức vụ đổi so với người liền trước. Nếu 1 nhóm bị cắt
+// ngang bởi ranh giới trang, trang sau lặp lại đúng thanh tiêu đề đó (chấp
+// nhận được - tránh phải đồng bộ trạng thái cuộn phức tạp hơn).
+const buildAccessRows = (pageUsers: AdminUser[]): AccessRow[] => {
   const rows: AccessRow[] = [];
-  for (let i = 0; i < sorted.length; ) {
-    const pos = sorted[i].position_name || UNASSIGNED_POSITION;
-    let j = i;
-    while (j < sorted.length && (sorted[j].position_name || UNASSIGNED_POSITION) === pos) j++;
-    for (let k = i; k < j; k++) {
-      rows.push({ ...sorted[k], positionRowSpan: k === i ? j - i : 0 });
+  let lastPosition: string | null = null;
+  for (const u of pageUsers) {
+    const pos = u.position_name || UNASSIGNED_POSITION;
+    if (pos !== lastPosition) {
+      rows.push({ kind: 'position', key: `pos-${pos}-${u.user_id}`, position_name: pos });
+      lastPosition = pos;
     }
-    i = j;
+    rows.push({ kind: 'user', key: u.user_id, user: u });
   }
   return rows;
+};
+
+// Màu nền avatar theo user_id (deterministic, không lưu DB) - chỉ để phân
+// biệt trực quan giữa các người trong danh sách dài, không mang ý nghĩa gì.
+const avatarColor = (id: string): string => {
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
+  return `hsl(${hash % 360}, 55%, 45%)`;
 };
 
 export default function AppsAdminPanel() {
@@ -81,6 +99,7 @@ export default function AppsAdminPanel() {
   const [accessApp, setAccessApp] = useState<AdminApp | null>(null);
   const [accessUserIds, setAccessUserIds] = useState<string[]>([]);
   const [accessSearch, setAccessSearch] = useState('');
+  const [accessPage, setAccessPage] = useState(1);
   const [savingAccess, setSavingAccess] = useState(false);
 
   const loadApps = () => {
@@ -154,6 +173,7 @@ export default function AppsAdminPanel() {
     setAccessApp(app);
     setAccessUserIds([]);
     setAccessSearch('');
+    setAccessPage(1);
     try {
       const res = await getAppAccessRequest(app.app_id);
       if (res.ok) setAccessUserIds(res.data.map((u) => u.user_id));
@@ -181,14 +201,42 @@ export default function AppsAdminPanel() {
     }
   };
 
+  const toggleAccessUser = (userId: string, checked: boolean) => {
+    setAccessUserIds((prev) =>
+      checked ? [...prev, userId] : prev.filter((id) => id !== userId),
+    );
+  };
+
+  const toggleAccessGroup = (userIds: string[], checked: boolean) => {
+    setAccessUserIds((prev) => {
+      const set = new Set(prev);
+      userIds.forEach((id) => (checked ? set.add(id) : set.delete(id)));
+      return Array.from(set);
+    });
+  };
+
   const accessSearchLower = accessSearch.trim().toLowerCase();
-  const filteredAccessUsers = (users ?? []).filter(
-    (u) =>
-      !accessSearchLower ||
-      u.full_name.toLowerCase().includes(accessSearchLower) ||
-      u.user_name.toLowerCase().includes(accessSearchLower),
+  // Sort + lọc trên TOÀN BỘ danh sách trước, rồi mới cắt trang - đếm/chọn cả
+  // nhóm (toggleAccessGroup) phải dựa trên đúng thành viên thật của chức vụ
+  // đó, không chỉ những người đang hiện ở trang hiện tại.
+  const filteredAccessUsers = sortByPositionThenName(
+    (users ?? []).filter(
+      (u) =>
+        !accessSearchLower ||
+        u.full_name.toLowerCase().includes(accessSearchLower) ||
+        u.user_name.toLowerCase().includes(accessSearchLower),
+    ),
   );
-  const accessRows = buildAccessRows(filteredAccessUsers);
+  const accessTotal = filteredAccessUsers.length;
+  const accessPageUsers = filteredAccessUsers.slice(
+    (accessPage - 1) * ACCESS_PAGE_SIZE,
+    accessPage * ACCESS_PAGE_SIZE,
+  );
+  const accessRows = buildAccessRows(accessPageUsers);
+  const membersOfPosition = (pos: string) =>
+    filteredAccessUsers
+      .filter((u) => (u.position_name || UNASSIGNED_POSITION) === pos)
+      .map((u) => u.user_id);
 
   return (
     <div className="ssoPanel">
@@ -358,45 +406,85 @@ export default function AppsAdminPanel() {
           placeholder="Tìm theo tên hoặc tài khoản..."
           allowClear
           value={accessSearch}
-          onChange={(e) => setAccessSearch(e.target.value)}
+          onChange={(e) => {
+            setAccessSearch(e.target.value);
+            setAccessPage(1);
+          }}
           style={{ marginBottom: 12 }}
         />
         <Table<AccessRow>
-          rowKey="user_id"
+          rowKey="key"
           size="small"
+          bordered
           loading={users === null}
           dataSource={accessRows}
           pagination={false}
-          scroll={{ y: 360 }}
-          rowSelection={{
-            selectedRowKeys: accessUserIds,
-            onChange: (keys) => setAccessUserIds(keys as string[]),
-          }}
+          rowClassName={(row) => (row.kind === 'position' ? 'ssoAccessTable-groupRow' : '')}
           columns={[
             {
-              title: 'Chức vụ',
-              dataIndex: 'position_name',
-              width: 150,
-              // rowSpan=0 -> antd tự ẩn ô (gộp vào dòng đầu nhóm phía trên).
-              onCell: (row) => ({ rowSpan: row.positionRowSpan }),
-              render: (_, row) => (
-                <span style={{ fontWeight: 600 }}>{row.position_name || UNASSIGNED_POSITION}</span>
-              ),
+              title: '',
+              key: 'select',
+              width: 44,
+              render: (_, row) => {
+                if (row.kind === 'user') {
+                  return (
+                    <Checkbox
+                      checked={accessUserIds.includes(row.user.user_id)}
+                      onChange={(e) => toggleAccessUser(row.user.user_id, e.target.checked)}
+                    />
+                  );
+                }
+                const ids = membersOfPosition(row.position_name);
+                const selectedCount = ids.filter((id) => accessUserIds.includes(id)).length;
+                return (
+                  <Checkbox
+                    checked={ids.length > 0 && selectedCount === ids.length}
+                    indeterminate={selectedCount > 0 && selectedCount < ids.length}
+                    onChange={(e) => toggleAccessGroup(ids, e.target.checked)}
+                  />
+                );
+              },
             },
             {
-              title: 'Họ tên',
-              dataIndex: 'full_name',
-            },
-            {
-              title: 'Tài khoản',
-              dataIndex: 'user_name',
-              width: 140,
-              render: (v: string) => (
-                <span style={{ color: 'var(--color-text-secondary)' }}>@{v}</span>
-              ),
+              title: 'Người / Chức vụ',
+              key: 'name',
+              render: (_, row) => {
+                if (row.kind === 'position') {
+                  return (
+                    <Space size={8}>
+                      <Typography.Text strong>{row.position_name}</Typography.Text>
+                      <Tag>{membersOfPosition(row.position_name).length} người</Tag>
+                    </Space>
+                  );
+                }
+                return (
+                  <Space>
+                    <Avatar size={26} style={{ background: avatarColor(row.user.user_id), flex: 'none' }}>
+                      {row.user.full_name.trim().charAt(0).toUpperCase()}
+                    </Avatar>
+                    <div>
+                      <div>{row.user.full_name}</div>
+                      <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+                        @{row.user.user_name}
+                      </div>
+                    </div>
+                  </Space>
+                );
+              },
             },
           ]}
         />
+        {accessTotal > ACCESS_PAGE_SIZE && (
+          <Pagination
+            style={{ marginTop: 12, textAlign: 'right' }}
+            size="small"
+            current={accessPage}
+            pageSize={ACCESS_PAGE_SIZE}
+            total={accessTotal}
+            onChange={setAccessPage}
+            showSizeChanger={false}
+          />
+        )}
       </Modal>
     </div>
   );
