@@ -31,7 +31,14 @@ function safeRedirectTarget(raw: string | null): string | null {
   if (!ALLOWED_REDIRECT_SUFFIX) return null;
   try {
     const url = new URL(raw);
-    if (url.protocol === 'https:' && url.hostname.endsWith(ALLOWED_REDIRECT_SUFFIX)) {
+    // https luôn OK. http chỉ chấp nhận khi hostname là localhost/127.0.0.1
+    // hoặc IPv4 literal (deploy trên server IP tĩnh, chưa gắn domain + TLS) -
+    // với domain thật vẫn bắt buộc https để chống downgrade.
+    const isIpv4 = /^(\d{1,3}\.){3}\d{1,3}$/.test(url.hostname);
+    const httpOk =
+      url.protocol === 'http:' &&
+      (url.hostname === 'localhost' || url.hostname === '127.0.0.1' || isIpv4);
+    if ((url.protocol === 'https:' || httpOk) && url.hostname.endsWith(ALLOWED_REDIRECT_SUFFIX)) {
       return raw;
     }
   } catch {
