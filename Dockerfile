@@ -11,10 +11,12 @@ COPY . .
 # build-web/Dockerfile khi quên bước này).
 ARG VITE_ALLOWED_REDIRECT_SUFFIX
 ENV VITE_ALLOWED_REDIRECT_SUFFIX=$VITE_ALLOWED_REDIRECT_SUFFIX
-# URL tuyệt đối của api-gateway - sso-web giờ là frontend app độc lập (port
-# riêng), gọi API cross-origin thật, không còn same-origin với gateway nữa.
-ARG VITE_GATEWAY_URL
-ENV VITE_GATEWAY_URL=$VITE_GATEWAY_URL
+# Base path axios/fetch dùng - giống hệt build-web/task-web (xem
+# build-web/Dockerfile). nginx của sso-web tự proxy /api same-origin sang
+# gateway (xem config/default.conf) - tránh CORS + Safari chặn cookie
+# cross-origin.
+ARG VITE_BASE_URL
+ENV VITE_BASE_URL=$VITE_BASE_URL
 # Domain cha dùng chung - khi bấm toggle sáng/tối, ghi cookie theme_mode ở
 # domain này để đồng bộ theme với build-web (và ngược lại). Rỗng -> cookie
 # host-only, toggle vẫn chạy nhưng không lan sang app khác.

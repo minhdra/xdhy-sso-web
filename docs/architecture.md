@@ -7,18 +7,25 @@ Browser
   │
   ▼
 sso-web (:5173 dev, nginx serve dist/ prod — port/domain riêng, độc lập build-web)
-  │  gọi API cross-origin (fetch, credentials: 'include') sang api-gateway
+  │  gọi API same-origin (fetch, credentials: 'include', path tương đối /api/sso/*)
+  ▼
+nginx của chính sso-web (prod, config/default.conf) hoặc vite server.proxy (dev,
+vite.config.ts) — proxy /api/* sang api-gateway
   ▼
 api-gateway (:6688)
-  │  rewrite /api/sso/* → /api-sso/*, CORS riêng cho origin sso-web (SSO_ORIGIN)
+  │  rewrite /api/sso/* → /api-sso/*
   ▼
 api-sso — auth, hồ sơ tài khoản, quản lý ứng dụng (xem api-sso/docs/architecture.md)
 ```
 
-`sso-web` là **frontend độc lập** (như `build-web`), không phải trang tĩnh do `api-gateway`/`api-sso`
-phục vụ — build riêng, publish port riêng (`docker-compose.sso-sandbox.yml` service
-`sso-web-sandbox`). Không tự mở cổng ra internet ngoài nginx phục vụ chính nó (đúng nguyên tắc "chỉ
-frontend + gateway mở cổng").
+`sso-web` là **frontend độc lập** (như `build-web`/`task-web`), không phải trang tĩnh do
+`api-gateway`/`api-sso` phục vụ — build riêng, publish port riêng (`docker-compose.sso-sandbox.yml`
+service `sso-web-sandbox`). Không tự mở cổng ra internet ngoài nginx phục vụ chính nó (đúng nguyên tắc
+"chỉ frontend + gateway mở cổng").
+
+Gọi API **same-origin** ở cả 2 môi trường, giống hệt `build-web`/`task-web` cả cơ chế lẫn tên biến
+(`VITE_BASE_URL=/api`) — browser thấy cùng origin nên không cần CORS thật, tránh luôn vấn đề Safari
+chặn `Set-Cookie` từ response cross-origin (xem `technical_decisions.md`).
 
 Vai trò: (1) trang đăng nhập dùng chung cho mọi app trong hệ thống (build-web redirect sang đây khi
 chưa đăng nhập — `build-web/src/urls.ts` `getLoginUrl()`), (2) trang chủ liệt kê app user được truy
@@ -95,9 +102,10 @@ Tab admin ẩn ở FE **không phải lớp bảo vệ duy nhất** — `api-sso
 
 ## Docker
 
-Multi-stage: build stage `npm i -g pnpm` + `pnpm build` (cần build arg `VITE_GATEWAY_URL`,
-`VITE_ALLOWED_REDIRECT_SUFFIX`, `VITE_COOKIE_DOMAIN` — Vite bake env vào bundle lúc build, phải khai
-`ARG` + `ENV` promote trong Dockerfile, thiếu bước này build arg bị bỏ qua âm thầm, bug thật đã gặp 3
-lần khi làm `sso-web`/`build-web`). Production stage: `nginx:alpine` serve `dist/`, SPA fallback
-(`try_files $uri $uri/ /index.html`) — cần thiết vì dùng `react-router` (route như `/account` không có
-file thật trên disk).
+Multi-stage: build stage `npm i -g pnpm` + `pnpm build` (cần build arg `VITE_BASE_URL` — luôn `/api`,
+giống `build-web`/`task-web` — `VITE_ALLOWED_REDIRECT_SUFFIX`, `VITE_COOKIE_DOMAIN` — Vite
+bake env vào bundle lúc build, phải khai `ARG` + `ENV` promote trong Dockerfile, thiếu bước này build
+arg bị bỏ qua âm thầm, bug thật đã gặp 3 lần khi làm `sso-web`/`build-web`). Production stage:
+`nginx:alpine` serve `dist/` + proxy `/api/*` same-origin sang `api-gateway` (`config/default.conf`,
+xem sơ đồ đầu file), SPA fallback (`try_files $uri $uri/ /index.html`) — cần thiết vì dùng `react-router`
+(route như `/account` không có file thật trên disk).

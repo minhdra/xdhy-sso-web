@@ -1,9 +1,10 @@
-// sso-web là frontend app độc lập (port riêng, không đi qua gateway để phục vụ
-// trang) - gọi API cross-origin sang gateway, cần URL tuyệt đối
-// (VITE_GATEWAY_URL, build arg). Mọi endpoint đi qua 1 tiền tố /api/sso/* ->
-// /api-sso/* (xem gateway.config.yml ssoApiPipeline + SSO_ORIGIN cho CORS).
-const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL ?? '';
-const BASE = `${GATEWAY_URL}/api/sso`;
+// sso-web same-origin với gateway - production qua nginx proxy của chính nó
+// (config/default.conf), dev qua vite server.proxy (vite.config.ts) - giống
+// hệt build-web/task-web (VITE_BASE_URL=/api, xem build-web/src/constant/config.ts).
+// Mọi endpoint đi qua tiền tố /api/sso/* -> /api-sso/* (xem gateway.config.yml
+// ssoApiPipeline).
+const BASE_URL = import.meta.env.VITE_BASE_URL;
+const BASE = `${BASE_URL}/sso`;
 
 export interface ApiError {
   message: string;
@@ -185,7 +186,7 @@ export function avatarSrc(raw: string | null | undefined): string | undefined {
   if (!raw) return undefined;
   if (/^https?:\/\//.test(raw)) return raw;
   const clean = raw.replace(/\\/g, '/');
-  if (clean.startsWith('/api-sso/')) return `${GATEWAY_URL}/api/sso${clean.slice('/api-sso'.length)}`;
+  if (clean.startsWith('/api-sso/')) return `${BASE_URL}/sso${clean.slice('/api-sso'.length)}`;
   // Đường dẫn cũ do api-core lưu -> phục vụ qua pipeline api-core.
-  return `${GATEWAY_URL}/api/api-core/${clean.replace(/^\/+/, '')}`;
+  return `${BASE_URL}/api-core/${clean.replace(/^\/+/, '')}`;
 }

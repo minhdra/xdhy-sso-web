@@ -4,12 +4,30 @@ Quyết định kỹ thuật + lý do — không lặp lại "làm gì" (đã c�
 
 ## Frontend độc lập, không do `api-gateway`/`api-sso` phục vụ
 
-**Chọn:** `sso-web` build/deploy như 1 app riêng (Vite+React+antd), gọi API cross-origin. **Thử trước
-đó:** phục vụ trang login qua `api-gateway` (HTML+JS thuần, same-origin với `api-sso`) — đơn giản hơn
-lúc đầu (không cần CORS). **Đổi hướng vì:** yêu cầu giao diện tăng dần (toast thật, dark mode, form
-quên mật khẩu, rồi cả trang "Quản lý tài khoản" nhiều tab) khiến HTML tĩnh không còn hợp lý — cần
-React/antd đầy đủ. Xem thêm góc nhìn từ phía `api-sso` ở
+**Chọn:** `sso-web` build/deploy như 1 app riêng (Vite+React+antd, port/domain riêng), publish HTML
+tĩnh + nginx của chính nó. **Thử trước đó:** phục vụ trang login qua `api-gateway` (HTML+JS thuần,
+same-origin với `api-sso`) — đơn giản hơn lúc đầu. **Đổi hướng vì:** yêu cầu giao diện tăng dần (toast
+thật, dark mode, form quên mật khẩu, rồi cả trang "Quản lý tài khoản" nhiều tab) khiến HTML tĩnh không
+còn hợp lý — cần React/antd đầy đủ. Xem thêm góc nhìn từ phía `api-sso` ở
 [`api-sso/docs/technical_decisions.md`](../../api-sso/docs/technical_decisions.md).
+
+## Gọi API same-origin qua nginx proxy của chính nó, không cross-origin thật
+
+**Chọn:** nginx của `sso-web` (`config/default.conf`) proxy `/api/*` sang `api-gateway` cùng origin với
+trang, dev dùng vite `server.proxy` (`vite.config.ts`) làm y hệt việc đó — `api.ts` gọi path tương đối
+qua `VITE_BASE_URL=/api` (`BASE = \`${BASE_URL}/sso\``), không dùng URL tuyệt đối, ở **cả 2 môi
+trường**. **Thử trước đó:** gọi cross-origin thẳng qua `VITE_GATEWAY_URL` (URL tuyệt đối tới gateway,
+biến riêng chỉ `sso-web` có) + CORS riêng (`SSO_ORIGIN` bên `api-gateway`), dev không có vite proxy nên
+bắt buộc cross-origin. **Đổi hướng vì (07/09/2026):** 3 lý do — (1) nhất quán với
+`build-web`/`task-web` cả tên biến (`VITE_BASE_URL=/api`) lẫn cơ chế (nginx proxy production + vite
+`server.proxy` dev) — không app nào khác gọi cross-origin thật cả, cross-origin ở `sso-web` là ngoại lệ
+không cần thiết, (2) Safari chặn `Set-Cookie` từ response cross-origin trong nhiều trường hợp (kể cả có
+`credentials: 'include'` + CORS đúng) — same-origin loại bỏ hẳn lớp rủi ro này ở cả dev lẫn production,
+(3) xoá được hẳn 1 biến env riêng biệt (`VITE_GATEWAY_URL`) không có ở 2 app kia. **Đánh đổi:** mất khả
+năng tách domain hoàn toàn độc lập không qua proxy nào — chấp nhận được vì `sso-web` vẫn giữ nguyên
+port/container riêng, chỉ nginx/vite của nó biết `api-gateway` ở đâu. Biến `SSO_ORIGIN` bên `api-gateway`
+đã **xoá hẳn** (07/09/2026, không giữ fallback) — CORS cho sso-web không còn ý nghĩa gì nữa nên giữ lại
+chỉ gây hiểu lầm là còn cần cấu hình.
 
 ## Zustand thay vì Context/Redux cho state
 

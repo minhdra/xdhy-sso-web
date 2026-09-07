@@ -1,7 +1,9 @@
 # API
 
 `sso-web` **không sở hữu API nào** — mọi hàm gọi API nằm trong 1 file duy nhất
-[`src/api.ts`](../src/api.ts), tất cả qua `request()` dùng chung (base URL = `${VITE_GATEWAY_URL}/api/sso`,
+[`src/api.ts`](../src/api.ts), tất cả qua `request()` dùng chung (base URL = `/api/sso`, same-origin qua
+nginx proxy của chính `sso-web` (dev qua vite `server.proxy`) — `VITE_BASE_URL` luôn là `/api`, giống
+`build-web`/`task-web`;
 `credentials: 'include'` để cookie httpOnly đi kèm). Nguồn sự thật cho request/response thật: Swagger
 của `api-sso` (`GET /api/docs/api-sso/` qua gateway) — xem
 [`api-sso/docs/api.md`](../../api-sso/docs/api.md) để có bảng endpoint đầy đủ. File này chỉ liệt kê

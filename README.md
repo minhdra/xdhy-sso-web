@@ -26,9 +26,10 @@ pnpm install
 cp .env.example .env   # rồi điền giá trị thật, xem giải thích từng biến trong chính file .env.example
 ```
 
-`sso-web` gọi API cross-origin thẳng sang `api-gateway` (không qua vite dev proxy như `build-web`/
-`task-web`) — cần `api-gateway` đã cấu hình `SSO_ORIGIN` trỏ đúng origin của `sso-web` (mặc định
-`http://localhost:5173`), nếu không sẽ dính lỗi CORS. Chạy được đủ cả cụm hệ thống ở local — xem
+`sso-web` gọi API **same-origin**, giống hệt `build-web`/`task-web`: production nginx của chính nó
+(`config/default.conf`) proxy `/api/*` sang `api-gateway`, dev vite `server.proxy` (`vite.config.ts`)
+proxy tương tự — cả 2 đều dùng `VITE_BASE_URL=/api` (path tương đối), không cần CORS (xem
+[`docs/architecture.md`](./docs/architecture.md)). Chạy được đủ cả cụm hệ thống ở local — xem
 [`api-sso/docs/local_dev.md`](../api-sso/docs/local_dev.md).
 
 ## Chạy dev
@@ -37,8 +38,8 @@ cp .env.example .env   # rồi điền giá trị thật, xem giải thích từ
 pnpm dev
 ```
 
-Mặc định chạy ở `http://localhost:5173`, gọi API qua `VITE_GATEWAY_URL` (mặc định
-`http://localhost:6688`).
+Mặc định chạy ở `http://localhost:5173`, proxy `/api` sang `http://localhost:6688` (sửa target trong
+`vite.config.ts` nếu gateway local chạy port khác).
 
 ## Build
 
