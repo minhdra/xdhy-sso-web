@@ -419,6 +419,10 @@ export default function AppsAdminPanel() {
           loading={users === null}
           dataSource={accessRows}
           pagination={false}
+          // Cuộn riêng phần thân bảng (header + ô tìm kiếm + phân trang +
+          // footer Lưu/Huỷ của Modal luôn cố định, không bị đẩy trôi xuống
+          // dưới màn hình khi 1 trang đầy đủ 20 người quá dài).
+          scroll={{ y: 360 }}
           rowClassName={(row) => (row.kind === 'position' ? 'ssoAccessTable-groupRow' : '')}
           columns={[
             {
