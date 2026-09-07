@@ -18,6 +18,7 @@ import {
 import { useEffect, useState } from 'react';
 
 import {
+  avatarSrc,
   getAdminApps,
   getAdminUsers,
   getAppAccessRequest,
@@ -79,8 +80,10 @@ const buildAccessRows = (pageUsers: AdminUser[]): AccessRow[] => {
   return rows;
 };
 
-// Màu nền avatar theo user_id (deterministic, không lưu DB) - chỉ để phân
-// biệt trực quan giữa các người trong danh sách dài, không mang ý nghĩa gì.
+// Màu nền FALLBACK khi không có ảnh avatar thật (antd Avatar chỉ hiện
+// background này lúc `src` rỗng/tải lỗi - ảnh thật luôn nằm đè lên trên).
+// Deterministic theo user_id (không lưu DB), không mang ý nghĩa gì, chỉ để
+// phân biệt trực quan giữa các người trong danh sách dài.
 const avatarColor = (id: string): string => {
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
@@ -463,7 +466,11 @@ export default function AppsAdminPanel() {
                 }
                 return (
                   <Space>
-                    <Avatar size={26} style={{ background: avatarColor(row.user.user_id), flex: 'none' }}>
+                    <Avatar
+                      size={26}
+                      src={avatarSrc(row.user.avatar)}
+                      style={{ background: avatarColor(row.user.user_id), flex: 'none' }}
+                    >
                       {row.user.full_name.trim().charAt(0).toUpperCase()}
                     </Avatar>
                     <div>

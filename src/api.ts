@@ -156,6 +156,9 @@ export interface AdminUser {
   user_id: string;
   user_name: string;
   full_name: string;
+  // Đường dẫn lưu DB (chưa phải URL) - dùng avatarSrc() bên dưới để ra URL
+  // gọi được thật.
+  avatar: string | null;
   position_name: string | null;
 }
 export const getAdminUsers = () => get<AdminUser[]>('admin/users');
