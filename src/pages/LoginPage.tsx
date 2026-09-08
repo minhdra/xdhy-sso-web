@@ -222,7 +222,7 @@ export default function LoginPage() {
                     </Typography.Text>
 
                     <Form form={loginForm} layout="vertical" onFinish={handleLogin}>
-                      <Form.Item name="username" label="Tài khoản / Email / SĐT" rules={RULES_FORM.required}>
+                      <Form.Item name="username" label="Tài khoản / Email / Điện thoại" rules={RULES_FORM.required}>
                         <Input
                           size="large"
                           placeholder="Tài khoản, email hoặc số điện thoại"
@@ -303,14 +303,14 @@ export default function LoginPage() {
               </>
             )}
             <Typography.Text type="secondary" className="footer">
-              © AI Institute. All rights reserved.
+              © An Trường Phát Hưng Yên. All rights reserved.
             </Typography.Text>
           </div>
         </div>
         <div className="illustrationSide">
           <div className="illustrationCopy">
-            <h2>Quản lý tài chính và công việc của công ty</h2>
-            <p>Nền tảng nội bộ giúp theo dõi tài chính, giao việc và tiến độ — tất cả trong {BRAND_NAME}.</p>
+            <h2>Cổng truy cập chung của doanh nghiệp</h2>
+            <p>Đăng nhập một lần để sử dụng các ứng dụng nội bộ được kết nối trong {BRAND_NAME}.</p>
           </div>
           <div ref={illustrationRef} className="illustrationAnim" />
         </div>

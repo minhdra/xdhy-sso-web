@@ -128,7 +128,7 @@ export default function ResetPasswordPage() {
               </>
             )}
             <Typography.Text type="secondary" className="footer">
-              © AI Institute. All rights reserved.
+              © An Trường Phát Hưng Yên. All rights reserved.
             </Typography.Text>
           </div>
         </div>
