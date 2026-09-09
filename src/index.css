@@ -108,7 +108,9 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .page::before,
-  .page::after {
+  .page::after,
+  .ssoHomeShell::before,
+  .ssoHomeShell::after {
     animation: none;
   }
 }
@@ -294,6 +296,43 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  /* Nền + 2 quả cầu trôi giống hệt trang login (.page) - dùng chung
+     @keyframes login-orb-drift. .ssoHeader/.ssoHome/.ssoFooter đã có
+     z-index:1 sẵn nên nằm trên lớp nền này. */
+  background:
+    radial-gradient(circle at 15% 18%, rgba(114, 181, 232, 0.34), transparent 31%),
+    radial-gradient(circle at 87% 82%, rgba(78, 143, 205, 0.2), transparent 34%),
+    linear-gradient(145deg, #eef7ff 0%, #dcecf9 46%, #f5faff 100%);
+}
+.ssoHomeShell::before,
+.ssoHomeShell::after {
+  content: '';
+  position: absolute;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+.ssoHomeShell::before {
+  width: clamp(180px, 24vw, 360px);
+  top: -9%;
+  right: 7%;
+  background: rgba(255, 255, 255, 0.44);
+  filter: blur(2px);
+  animation: login-orb-drift 12s ease-in-out infinite alternate;
+}
+.ssoHomeShell::after {
+  width: clamp(130px, 17vw, 250px);
+  bottom: -7%;
+  left: 9%;
+  background: rgba(77, 148, 207, 0.1);
+  animation: login-orb-drift 16s ease-in-out -4s infinite alternate-reverse;
+}
+:root[data-theme='dark'] .ssoHomeShell {
+  background:
+    radial-gradient(circle at 16% 17%, rgba(37, 99, 166, 0.24), transparent 32%),
+    radial-gradient(circle at 86% 82%, rgba(46, 112, 174, 0.14), transparent 35%),
+    linear-gradient(145deg, #111a24 0%, #172536 48%, #101720 100%);
 }
 
 .ssoHeader {
