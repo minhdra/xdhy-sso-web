@@ -7,32 +7,66 @@ import { getSessions, revokeSessionRequest, type SsoSession } from '../../api';
 // Parse gọn user-agent -> "Chrome · macOS" (không cần thư viện).
 function describeAgent(ua: string | null): string {
   if (!ua) return 'Không rõ thiết bị';
-  const browser =
-    /Edg\//.test(ua) ? 'Edge'
-    : /OPR\//.test(ua) ? 'Opera'
-    : /Chrome\//.test(ua) ? 'Chrome'
-    : /Firefox\//.test(ua) ? 'Firefox'
-    : /Safari\//.test(ua) ? 'Safari'
-    : /curl\//.test(ua) ? 'curl'
-    : 'Trình duyệt khác';
+
+  // OS: iOS PHẢI check trước macOS - mọi UA iOS đều chứa "like Mac OS X".
   const os =
-    /Windows/.test(ua) ? 'Windows'
-    : /Mac OS X|Macintosh/.test(ua) ? 'macOS'
+    /iPhone|iPad|iPod/.test(ua) ? 'iOS'
     : /Android/.test(ua) ? 'Android'
-    : /iPhone|iPad|iOS/.test(ua) ? 'iOS'
+    : /Windows NT/.test(ua) ? 'Windows'
+    : /CrOS/.test(ua) ? 'ChromeOS'
+    : /Mac OS X|Macintosh/.test(ua) ? 'macOS'
     : /Linux/.test(ua) ? 'Linux'
     : '';
+
+  // Webview app trong ứng dụng (Zalo, Facebook, IG, LINE) không có token
+  // "Safari/" -> check trước các trình duyệt thường. Electron trước Chrome.
+  const browser =
+    /Zalo/i.test(ua) ? 'Zalo'
+    : /FBAN|FBAV|FB_IAB/.test(ua) ? 'Facebook'
+    : /Instagram/i.test(ua) ? 'Instagram'
+    : /\bLine\//i.test(ua) ? 'LINE'
+    : /Code\/[\d.]+ /.test(ua) ? 'VS Code'
+    : /Electron\//.test(ua) ? 'Ứng dụng desktop'
+    : /Edg(A|iOS)?\//.test(ua) ? 'Edge'
+    : /OPR\/|OPiOS\//.test(ua) ? 'Opera'
+    : /SamsungBrowser\//.test(ua) ? 'Samsung Internet'
+    : /Firefox\/|FxiOS\//.test(ua) ? 'Firefox'
+    : /CriOS\/|Chrome\//.test(ua) ? 'Chrome'
+    : /curl\//.test(ua) ? 'curl'
+    : /Version\/[\d.]+.*Safari\/|Safari\//.test(ua) ? 'Safari'
+    : 'Trình duyệt khác';
+
   return os ? `${browser} · ${os}` : browser;
 }
 
 function relativeTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return 'không rõ';
+  const diff = Date.now() - then;
+  // diff < 30s (gồm cả lệch nhỏ về "tương lai") -> vừa xong.
+  if (diff < 30_000) return 'vừa xong';
   const min = Math.round(diff / 60000);
-  if (min < 1) return 'vừa xong';
   if (min < 60) return `${min} phút trước`;
   const hr = Math.round(min / 60);
   if (hr < 24) return `${hr} giờ trước`;
-  return `${Math.round(hr / 24)} ngày trước`;
+  const day = Math.round(hr / 24);
+  if (day < 30) return `${day} ngày trước`;
+  return `${Math.round(day / 30)} tháng trước`;
+}
+
+// Cột `ip` có thể kèm ":port" (117.7.137.54:57741) do IIS/ARR - bỏ khi hiển
+// thị. IPv6 trần (nhiều dấu ":") giữ nguyên; loopback gọi là "localhost".
+function displayIp(ip: string | null): string {
+  if (!ip) return 'IP không rõ';
+  if (ip === '::1' || ip === '127.0.0.1' || ip === '::ffff:127.0.0.1') return 'localhost';
+  const mapped = ip.match(/^::ffff:(\d{1,3}(?:\.\d{1,3}){3})(?::\d+)?$/i);
+  if (mapped) return mapped[1];
+  if (ip.startsWith('[')) {
+    const end = ip.indexOf(']');
+    return end > 0 ? ip.slice(1, end) : ip;
+  }
+  const parts = ip.split(':');
+  return parts.length === 2 ? parts[0] : ip;
 }
 
 export default function SessionsPanel() {
@@ -54,7 +88,7 @@ export default function SessionsPanel() {
   const handleRevoke = (s: SsoSession) => {
     modal.confirm({
       title: 'Thu hồi phiên này?',
-      content: `${describeAgent(s.user_agent)} — ${s.ip ?? 'IP không rõ'}. Thiết bị đó sẽ phải đăng nhập lại.`,
+      content: `${describeAgent(s.user_agent)} — ${displayIp(s.ip)}. Thiết bị đó sẽ phải đăng nhập lại.`,
       okText: 'Thu hồi',
       okButtonProps: { danger: true },
       cancelText: 'Huỷ',
@@ -135,7 +169,7 @@ export default function SessionsPanel() {
                   <List.Item.Meta
                     title={
                       <>
-                        {s.ip ?? 'IP không rõ'}{' '}
+                        {displayIp(s.ip)}{' '}
                         {s.current && <Tag color="blue">Phiên này</Tag>}
                         {s.remember && <Tag>Ghi nhớ</Tag>}
                       </>
