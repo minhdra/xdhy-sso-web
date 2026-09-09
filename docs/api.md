@@ -1,7 +1,7 @@
 # API
 
 `sso-web` **không sở hữu API nào** — mọi hàm gọi API nằm trong 1 file duy nhất
-[`src/api.ts`](../src/api.ts), tất cả qua `request()` dùng chung (base URL = `/api/sso`, same-origin qua
+[`src/api.ts`](../src/api.ts), tất cả qua `request()` dùng chung (base URL = `/api/api-sso`, same-origin qua
 nginx proxy của chính `sso-web` (dev qua vite `server.proxy`) — `VITE_BASE_URL` luôn là `/api`, giống
 `build-web`/`task-web`;
 `credentials: 'include'` để cookie httpOnly đi kèm). Nguồn sự thật cho request/response thật: Swagger
@@ -47,6 +47,6 @@ tự `throw` khi lỗi (khác `build-web/src/lib/api.ts` là axios interceptor t
 Giá trị `avatar` lưu trong `user_profiles` có thể ở 2 dạng: đường dẫn mới do `api-sso` ghi
 (`/api-sso/uploads/avatars/...`) hoặc đường dẫn cũ kế thừa từ `api-core`/`build-web`
 (`uploads\yyyy-mm-dd\...`, dùng `\` — Windows-style path do code cũ). `avatarSrc()` (`api.ts`) quy cả 2
-về URL gọi được từ trình duyệt: dạng mới → `${GATEWAY_URL}/api/sso/uploads/...`; dạng cũ →
+về URL gọi được từ trình duyệt: dạng mới → `${GATEWAY_URL}/api/api-sso/uploads/...`; dạng cũ →
 `${GATEWAY_URL}/api/api-core/uploads/...` (route cũ vẫn còn, `api-core` không bị sửa — xem
 `api-sso/docs/architecture.md`).

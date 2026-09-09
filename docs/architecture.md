@@ -7,13 +7,13 @@ Browser
   │
   ▼
 sso-web (:5173 dev, nginx serve dist/ prod — port/domain riêng, độc lập build-web)
-  │  gọi API same-origin (fetch, credentials: 'include', path tương đối /api/sso/*)
+  │  gọi API same-origin (fetch, credentials: 'include', path tương đối /api/api-sso/*)
   ▼
 nginx của chính sso-web (prod, config/default.conf) hoặc vite server.proxy (dev,
 vite.config.ts) — proxy /api/* sang api-gateway
   ▼
 api-gateway (:6688)
-  │  rewrite /api/sso/* → /api-sso/*
+  │  rewrite /api/api-sso/* → /api-sso/*
   ▼
 api-sso — auth, hồ sơ tài khoản, quản lý ứng dụng (xem api-sso/docs/architecture.md)
 ```

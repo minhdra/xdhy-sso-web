@@ -1,10 +1,10 @@
 // sso-web same-origin với gateway - production qua nginx proxy của chính nó
 // (config/default.conf), dev qua vite server.proxy (vite.config.ts) - giống
 // hệt build-web/task-web (VITE_BASE_URL=/api, xem build-web/src/constant/config.ts).
-// Mọi endpoint đi qua tiền tố /api/sso/* -> /api-sso/* (xem gateway.config.yml
-// ssoApiPipeline).
+// Mọi endpoint đi qua tiền tố /api/api-sso/* -> /api-sso/* (xem gateway.config.yml
+// ssoApiPipeline). Prefix "api-sso" khớp /api/api-core, /api/api-task.
 const BASE_URL = import.meta.env.VITE_BASE_URL;
-const BASE = `${BASE_URL}/sso`;
+const BASE = `${BASE_URL}/api-sso`;
 
 export interface ApiError {
   message: string;
@@ -183,8 +183,8 @@ export const revokeSessionRequest = (session_id: string) =>
   post<{ success: boolean; message: string }>('account/sessions/revoke', { session_id });
 
 // Ảnh avatar. Từ 09/09/2026 api-sso (/me, /account/profile) đã trả URL sẵn
-// sàng ("/api/sso/uploads/..." hoặc "/api/api-core/uploads/...") - hàm này chỉ
-// còn để xử lý path THÔ từ chỗ khác (vd trang quản trị app dùng proc
+// sàng ("/api/api-sso/uploads/..." hoặc "/api/api-core/uploads/...") - hàm này
+// chỉ còn để xử lý path THÔ từ chỗ khác (vd trang quản trị app dùng proc
 // a_AdminListUsers trả nguyên "uploads\\yyyy-mm-dd\\..." hoặc "/api-sso/...").
 export function avatarSrc(raw: string | null | undefined): string | undefined {
   if (!raw) return undefined;
@@ -193,7 +193,9 @@ export function avatarSrc(raw: string | null | undefined): string | undefined {
   const clean = raw.replace(/\\/g, '/');
   const encode = (p: string) => p.split('/').map(encodeURIComponent).join('/');
   if (clean.startsWith('/api-sso/')) {
-    return `${BASE_URL}/sso/${encode(clean.slice('/api-sso/'.length))}`;
+    // "/api-sso/uploads/x" -> "/api" + "/api-sso/uploads/x" (gateway
+    // /api/api-sso/* -> /api-sso/*).
+    return `${BASE_URL}/${encode(clean.replace(/^\/+/, ''))}`;
   }
   // Đường dẫn cũ do api-core lưu -> phục vụ qua pipeline api-core.
   return `${BASE_URL}/api-core/${encode(clean.replace(/^\/+/, ''))}`;
