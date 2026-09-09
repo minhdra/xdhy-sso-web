@@ -309,7 +309,11 @@ export default function LoginPage() {
         </div>
         <div className="illustrationSide">
           <div className="illustrationCopy">
-            <h2>Cổng truy cập chung của doanh nghiệp</h2>
+            <h2>
+              Cổng truy cập chung của
+              <br />
+              doanh nghiệp
+            </h2>
             <p>Đăng nhập một lần để sử dụng các ứng dụng nội bộ được kết nối trong {BRAND_NAME}.</p>
           </div>
           <div ref={illustrationRef} className="illustrationAnim" />
