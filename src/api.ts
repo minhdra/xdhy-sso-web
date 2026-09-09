@@ -182,14 +182,19 @@ export const getSessions = () => get<SsoSession[]>('account/sessions');
 export const revokeSessionRequest = (session_id: string) =>
   post<{ success: boolean; message: string }>('account/sessions/revoke', { session_id });
 
-// Ảnh avatar: giá trị lưu ở DB có 2 dạng - đường dẫn mới của api-sso
-// ("/api-sso/uploads/...") hoặc đường dẫn cũ kế thừa từ api-core
-// ("uploads\\yyyy-mm-dd\\..."). Trả về URL trình duyệt tải được.
+// Ảnh avatar. Từ 09/09/2026 api-sso (/me, /account/profile) đã trả URL sẵn
+// sàng ("/api/sso/uploads/..." hoặc "/api/api-core/uploads/...") - hàm này chỉ
+// còn để xử lý path THÔ từ chỗ khác (vd trang quản trị app dùng proc
+// a_AdminListUsers trả nguyên "uploads\\yyyy-mm-dd\\..." hoặc "/api-sso/...").
 export function avatarSrc(raw: string | null | undefined): string | undefined {
   if (!raw) return undefined;
   if (/^https?:\/\//.test(raw)) return raw;
+  if (raw.startsWith('/api/')) return raw; // đã resolve sẵn từ backend
   const clean = raw.replace(/\\/g, '/');
-  if (clean.startsWith('/api-sso/')) return `${BASE_URL}/sso${clean.slice('/api-sso'.length)}`;
+  const encode = (p: string) => p.split('/').map(encodeURIComponent).join('/');
+  if (clean.startsWith('/api-sso/')) {
+    return `${BASE_URL}/sso/${encode(clean.slice('/api-sso/'.length))}`;
+  }
   // Đường dẫn cũ do api-core lưu -> phục vụ qua pipeline api-core.
-  return `${BASE_URL}/api-core/${clean.replace(/^\/+/, '')}`;
+  return `${BASE_URL}/api-core/${encode(clean.replace(/^\/+/, ''))}`;
 }
