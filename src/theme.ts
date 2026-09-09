@@ -63,7 +63,7 @@ export const getThemeConfig = (mode: ThemeMode): ThemeConfig => ({
     mode === 'dark' ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
   token: {
     fontFamily:
-      "-apple-system, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif",
+      "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     fontSize: 13,
     colorPrimary: PRIMARY,
     colorSuccess: '#53c31b',
