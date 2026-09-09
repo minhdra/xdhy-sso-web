@@ -19,8 +19,8 @@ api-sso — auth, hồ sơ tài khoản, quản lý ứng dụng (xem api-sso/do
 ```
 
 `sso-web` là **frontend độc lập** (như `build-web`/`task-web`), không phải trang tĩnh do
-`api-gateway`/`api-sso` phục vụ — build riêng, publish port riêng (`docker-compose.sso-sandbox.yml`
-service `sso-web-sandbox`). Không tự mở cổng ra internet ngoài nginx phục vụ chính nó (đúng nguyên tắc
+`api-gateway`/`api-sso` phục vụ — build riêng, publish port riêng (`docker-compose.real.yml` service
+`sso-web`). Không tự mở cổng ra internet ngoài nginx phục vụ chính nó (đúng nguyên tắc
 "chỉ frontend + gateway mở cổng").
 
 Gọi API **same-origin** ở cả 2 môi trường, giống hệt `build-web`/`task-web` cả cơ chế lẫn tên biến

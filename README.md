@@ -57,10 +57,10 @@ Không có eslint/prettier riêng cho service này — chỉ `tsc` kiểm tra ki
 
 ## Docker
 
-Không có `docker-compose.yml` riêng cho service này — chạy cùng cụm sandbox ở gốc repo:
+Không có `docker-compose.yml` riêng cho service này — chạy cùng cụm ở gốc repo:
 
 ```bash
-docker compose -f ../docker-compose.sso-sandbox.yml up -d --build sso-web-sandbox
+docker compose -f ../docker-compose.real.yml up -d --build sso-web
 ```
 
 ## Tài liệu dự án
