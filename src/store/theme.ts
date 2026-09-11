@@ -1,16 +1,30 @@
-import { create } from 'zustand';
+import { create } from "zustand";
 
-import { getThemeModeFromCookie, setThemeModeCookie, type ThemeMode } from '../theme';
+import {
+  getFontSizeMode,
+  getThemeModeFromCookie,
+  setFontSizeModeCookie,
+  setThemeModeCookie,
+  type FontSizeMode,
+  type ThemeMode,
+} from "../theme";
 
 interface ThemeState {
   mode: ThemeMode;
   setMode: (mode: ThemeMode) => void;
   toggle: () => void;
+  fontSizeMode: FontSizeMode;
+  setFontSizeMode: (mode: FontSizeMode) => void;
 }
 
 const apply = (mode: ThemeMode) => {
-  document.documentElement.setAttribute('data-theme', mode);
+  document.documentElement.setAttribute("data-theme", mode);
   setThemeModeCookie(mode);
+};
+
+const applyFontSize = (mode: FontSizeMode) => {
+  document.documentElement.setAttribute("data-font-size", mode);
+  setFontSizeModeCookie(mode);
 };
 
 export const useThemeStore = create<ThemeState>((set, get) => ({
@@ -20,8 +34,13 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
     set({ mode });
   },
   toggle: () => {
-    const next: ThemeMode = get().mode === 'dark' ? 'light' : 'dark';
+    const next: ThemeMode = get().mode === "dark" ? "light" : "dark";
     apply(next);
     set({ mode: next });
+  },
+  fontSizeMode: getFontSizeMode(),
+  setFontSizeMode: (fontSizeMode) => {
+    applyFontSize(fontSizeMode);
+    set({ fontSizeMode });
   },
 }));
