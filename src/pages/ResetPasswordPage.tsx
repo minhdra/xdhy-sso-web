@@ -3,12 +3,14 @@ import { App as AntdApp, Button, Form, Input, Result, Typography, theme as antdT
 import { useState } from 'react';
 
 import { resetPasswordConfirmRequest } from '../api';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { RULES_FORM } from '../validator';
 
 // Trang "đổi mật khẩu" - user tới đây từ link trong email (?token=...), xem
 // AuthService.forgotPassword (api-sso). Không có token thì không cho vào
 // form - link phải luôn có token thật, tự gõ URL tay không tính.
 export default function ResetPasswordPage() {
+  useDocumentTitle('Đặt lại mật khẩu');
   const { token: themeToken } = antdTheme.useToken();
   // notification qua App.useApp() - gọi tĩnh notification.xxx() không ăn
   // theme của ConfigProvider (xem cùng ghi chú ở LoginPage.tsx).

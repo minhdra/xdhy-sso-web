@@ -4,9 +4,11 @@ import { useEffect, useState } from 'react';
 
 import { getApps, type SsoApp } from '../api';
 import AppHeader from '../components/AppHeader';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useSessionStore } from '../store/session';
 
 export default function HomePage() {
+  useDocumentTitle('Ứng dụng nội bộ');
   const { notification } = AntdApp.useApp();
   const user = useSessionStore((s) => s.user);
   const [apps, setApps] = useState<SsoApp[] | null>(null);

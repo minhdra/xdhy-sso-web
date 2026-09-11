@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router-dom';
 import loginBadge from '../assets/login-badge.json';
 import { forgotPasswordRequest, getMe, loginRequest, refreshRequest } from '../api';
 import { PageLoading } from '../components/PageLoading';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { RULES_FORM } from '../validator';
 
 const BRAND_NAME = 'XDHY';
@@ -50,6 +51,7 @@ function safeRedirectTarget(raw: string | null): string | null {
 type ViewMode = 'login' | 'forgot' | 'forgotSent';
 
 export default function LoginPage() {
+  useDocumentTitle('Đăng nhập');
   const navigate = useNavigate();
   const { token } = antdTheme.useToken();
   // notification qua App.useApp() (không phải gọi tĩnh `notification.xxx()`)

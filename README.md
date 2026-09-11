@@ -55,6 +55,13 @@ pnpm typecheck
 
 Không có eslint/prettier riêng cho service này — chỉ `tsc` kiểm tra kiểu.
 
+## Thu phóng chữ
+
+- Chế độ `standard`/`large` dùng chung cookie `xdhy_font_size` với `task-web`.
+- CSS nội bộ khai báo cỡ chữ bằng `rem`; chế độ `large` tăng `font-size` gốc theo cùng tỷ lệ `16/13`
+  với token Ant Design. Không dùng `font-size: ...px` hoặc `fontSize` dạng số trong component mới vì
+  các giá trị đó không phản ứng theo chế độ chữ lớn.
+
 ## Docker
 
 Không có `docker-compose.yml` riêng cho service này — chạy cùng cụm ở gốc repo:

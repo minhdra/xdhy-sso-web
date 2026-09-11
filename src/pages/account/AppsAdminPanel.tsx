@@ -277,7 +277,7 @@ export default function AppsAdminPanel() {
                     display: 'grid',
                     placeItems: 'center',
                     fontWeight: 700,
-                    fontSize: 13,
+                    fontSize: '0.8125rem',
                     flex: 'none',
                   }}
                 >
@@ -285,7 +285,7 @@ export default function AppsAdminPanel() {
                 </span>
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontWeight: 600 }}>{app.app_name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
                     {app.app_key}
                   </div>
                 </div>
@@ -297,7 +297,7 @@ export default function AppsAdminPanel() {
             dataIndex: 'url',
             render: (url: string) =>
               url ? (
-                <span style={{ fontSize: 12.5 }}>{url}</span>
+                <span style={{ fontSize: '0.78125rem' }}>{url}</span>
               ) : (
                 <Tag color="warning">Chưa cấu hình URL</Tag>
               ),
@@ -475,7 +475,7 @@ export default function AppsAdminPanel() {
                     </Avatar>
                     <div>
                       <div>{row.user.full_name}</div>
-                      <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
                         @{row.user.user_name}
                       </div>
                     </div>

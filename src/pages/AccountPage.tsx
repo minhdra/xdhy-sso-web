@@ -8,6 +8,7 @@ import { App as AntdApp } from 'antd';
 import { useSearchParams } from 'react-router-dom';
 
 import AppHeader from '../components/AppHeader';
+import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useSessionStore } from '../store/session';
 import AppsAdminPanel from './account/AppsAdminPanel';
 import PasswordPanel from './account/PasswordPanel';
@@ -31,6 +32,7 @@ const ADMIN_TAB = {
 } as const;
 
 export default function AccountPage() {
+  useDocumentTitle('Quản lý tài khoản');
   const [params, setParams] = useSearchParams();
   const isAdmin = useSessionStore((s) => s.user?.is_admin ?? false);
   const TABS = isAdmin ? [...BASE_TABS, ADMIN_TAB] : BASE_TABS;
