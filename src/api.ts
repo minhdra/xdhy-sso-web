@@ -17,14 +17,46 @@ export interface ApiResult<T> {
 }
 
 async function request<T>(method: string, path: string, body?: unknown): Promise<ApiResult<T>> {
-  const res = await fetch(`${BASE}/${path}`, {
-    method,
-    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-  const data = await res.json().catch(() => ({}));
-  return { ok: res.ok, status: res.status, data };
+  const diagnosticHeaders = appRequestHeaders();
+  const controller = new AbortController();
+  const timeoutMs = path === 'me' ? 12_000 : 30_000;
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${BASE}/${path}`, {
+      method,
+      headers: {
+        ...diagnosticHeaders,
+        ...(body === undefined ? {} : { 'Content-Type': 'application/json' }),
+      },
+      credentials: 'include',
+      // Dữ liệu phiên/quyền không được dùng lại từ HTTP cache. Trước đây
+      // browser liên tục revalidate /me bằng ETag (server trả 304) trong lúc
+      // route login <-> protected remount, làm loading nháy và gọi /me dồn dập.
+      cache: 'no-store',
+      signal: controller.signal,
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (path === 'me' || path === 'refresh') {
+      recordDiagnostic(path === 'me' ? 'session_check_completed' : 'refresh_completed', {
+        path,
+        status: res.status,
+        requestId: res.headers.get('X-Request-Id') ?? diagnosticHeaders['X-Request-Id'],
+      });
+    }
+    return { ok: res.ok, status: res.status, data };
+  } catch (error) {
+    if (path === 'me' || path === 'refresh') {
+      recordDiagnostic(path === 'me' ? 'session_check_failed' : 'refresh_failed', {
+        path,
+        requestId: diagnosticHeaders['X-Request-Id'],
+        detail: controller.signal.aborted ? 'timeout' : 'network',
+      });
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
+  }
 }
 
 const get = <T>(path: string) => request<T>('GET', path);
@@ -111,6 +143,7 @@ export async function uploadAvatarRequest(
   const res = await fetch(`${BASE}/account/avatar`, {
     method: 'POST',
     credentials: 'include',
+    headers: appRequestHeaders(),
     body: form,
   });
   const data = await res.json().catch(() => ({}));
@@ -133,7 +166,9 @@ export const getApps = () => get<SsoApp[]>('apps');
 // ---- Quản lý ứng dụng (chỉ admin - BE tự chặn 403 nếu gọi nhầm) ----
 export interface AdminApp extends SsoApp {
   sort_order: number;
-  access_count: number;
+  direct_access_count: number;
+  eligible_user_count: number;
+  effective_access_count: number;
 }
 export const getAdminApps = () => get<AdminApp[]>('admin/apps');
 
@@ -162,10 +197,44 @@ export interface AdminUser {
   position_name: string | null;
 }
 export const getAdminUsers = () => get<AdminUser[]>('admin/users');
+
+export interface AppAccessCandidate extends AdminUser {
+  position_id: number | null;
+}
+
+export interface AppAccessCandidatesPage {
+  rows: AppAccessCandidate[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
 export const getAppAccessRequest = (app_id: string) =>
   get<AdminUser[]>(`admin/apps/${app_id}/access`);
-export const setAppAccessRequest = (app_id: string, user_ids: string[]) =>
-  post<{ success: boolean; message: string }>(`admin/apps/${app_id}/access`, { user_ids });
+export const getAppAccessCandidatesRequest = (
+  app_id: string,
+  filters: { q?: string; position_id?: number; page: number; page_size: number },
+) => {
+  const params = new URLSearchParams({
+    page: String(filters.page),
+    page_size: String(filters.page_size),
+  });
+  if (filters.q) params.set('q', filters.q);
+  if (filters.position_id) params.set('position_id', String(filters.position_id));
+  return get<AppAccessCandidatesPage>(
+    `admin/apps/${app_id}/access-candidates?${params.toString()}`,
+  );
+};
+export const addAppAccessRequest = (app_id: string, user_ids: string[]) =>
+  post<{ success: boolean; message: string; affected: number }>(
+    `admin/apps/${app_id}/access/add`,
+    { user_ids },
+  );
+export const removeAppAccessRequest = (app_id: string, user_ids: string[]) =>
+  post<{ success: boolean; message: string; affected: number }>(
+    `admin/apps/${app_id}/access/remove`,
+    { user_ids },
+  );
 
 // ---- Sessions ----
 export interface SsoSession {
@@ -200,3 +269,4 @@ export function avatarSrc(raw: string | null | undefined): string | undefined {
   // Đường dẫn cũ do api-core lưu -> phục vụ qua pipeline api-core.
   return `${BASE_URL}/api-core/${encode(clean.replace(/^\/+/, ''))}`;
 }
+import { appRequestHeaders, recordDiagnostic } from './diagnostics';

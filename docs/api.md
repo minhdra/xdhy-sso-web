@@ -29,9 +29,11 @@ của `api-sso` (`GET /api/docs/api-sso/` qua gateway) — xem
 | `getAdminApps` | `GET /admin/apps` | `pages/account/AppsAdminPanel.tsx` |
 | `upsertAppRequest` | `POST /admin/apps` | `pages/account/AppsAdminPanel.tsx` (modal Thêm/Sửa) |
 | `deleteAppRequest` | `POST /admin/apps/delete` | `pages/account/AppsAdminPanel.tsx` |
-| `getAppAccessRequest` | `GET /admin/apps/{app_id}/access` | `pages/account/AppsAdminPanel.tsx` (mở modal Phân quyền) |
-| `setAppAccessRequest` | `POST /admin/apps/{app_id}/access` | `pages/account/AppsAdminPanel.tsx` (lưu modal Phân quyền) |
-| `getAdminUsers` | `GET /admin/users` | `pages/account/AppsAdminPanel.tsx` (options cho `Select` multi) |
+| `getAppAccessRequest` | `GET /admin/apps/{app_id}/access` | Danh sách người đang được cấp trực tiếp |
+| `getAdminUsers` | `GET /admin/users` | Tải khi mở modal quyền để dựng một danh sách checkbox đầy đủ |
+| `getAppAccessCandidatesRequest` | `GET /admin/apps/{app_id}/access-candidates` | Chỉ gọi khi mở modal “Thêm người”; tìm kiếm/lọc/phân trang ở backend |
+| `addAppAccessRequest` | `POST /admin/apps/{app_id}/access/add` | Cộng quyền cho tập user được chọn, không ghi đè grant hiện tại |
+| `removeAppAccessRequest` | `POST /admin/apps/{app_id}/access/remove` | Gỡ từng người hoặc một nhóm được chọn |
 | `avatarSrc(raw)` | — (không gọi API) | helper suy URL trình duyệt tải được từ giá trị `avatar` lưu trong DB — xem bên dưới |
 
 ## Quy ước response — khác `build-web`

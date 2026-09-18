@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
+import { recordDiagnostic } from './diagnostics';
 import ThemeProvider from "./ThemeProvider";
 import "./index.css";
 import {
@@ -20,6 +21,8 @@ document.documentElement.setAttribute("data-theme", initialThemeMode);
 const initialFontSizeMode = getFontSizeMode();
 setFontSizeModeCookie(initialFontSizeMode);
 document.documentElement.setAttribute("data-font-size", initialFontSizeMode);
+
+recordDiagnostic('app_boot_started');
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

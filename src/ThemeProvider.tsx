@@ -1,6 +1,7 @@
 import { App as AntdApp, ConfigProvider } from "antd";
 import { type ReactNode } from "react";
 
+import { VersionUpdateBanner } from "./components/VersionUpdateBanner";
 import { useThemeStore } from "./store/theme";
 import { getThemeConfig } from "./theme";
 
@@ -13,7 +14,10 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
 
   return (
     <ConfigProvider theme={getThemeConfig(mode, fontSizeMode)}>
-      <AntdApp>{children}</AntdApp>
+      <AntdApp>
+        <VersionUpdateBanner />
+        {children}
+      </AntdApp>
     </ConfigProvider>
   );
 }

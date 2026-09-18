@@ -31,6 +31,14 @@ Vai trò: (1) trang đăng nhập dùng chung cho mọi app trong hệ thống (
 chưa đăng nhập — `build-web/src/urls.ts` `getLoginUrl()`), (2) trang chủ liệt kê app user được truy
 cập, (3) trang "Quản lý tài khoản" (hồ sơ, mật khẩu, phiên đăng nhập, quản trị ứng dụng cho admin).
 
+Trang chủ dùng skeleton theo đúng hình card khi tải lần đầu. Lỗi `/apps` giữ nguyên phiên và có retry
+tại chỗ; refetch không xoá danh sách cũ. App chưa có URL hiển thị trạng thái “Chưa cấu hình URL” và
+không điều hướng thay vì tạo link chết.
+
+Motion dùng token CSS chung (press 140 ms, control 200 ms, reveal 280 ms, highlight 760 ms), chỉ reveal
+nhẹ bằng `transform`/`opacity`. App card stagger ngắn và panel tài khoản crossfade khi đổi tab. Khi hệ
+điều hành bật `prefers-reduced-motion`, animation không thiết yếu về 1 ms và Lottie đứng ở frame đầu.
+
 ## Cấu trúc `src/`
 
 ```
@@ -75,6 +83,23 @@ cho 1 trang có vài panel chuyển qua lại, không cần nested route.
 
 ## Auth flow (phía FE)
 
+Mỗi build phát sinh `/version.json` không cache (`app`, `version`, `buildId`,
+`builtAt`). Request từ frontend gửi `X-Request-Id`, `X-Navigation-Id` và
+`X-App-Version`; `api-sso` echo `X-Request-Id` để đối chiếu browser log với
+server log mà không ghi token/cookie.
+
+Các request auth/session dùng `fetch(..., { cache: 'no-store' })`; API cũng
+trả `Cache-Control: no-store, private, must-revalidate`. Không cache/ETag
+revalidation `/me`: quyền và phiên có thể đổi giữa hai request, và response
+`304` trong lúc route auth remount từng gây vòng gọi `/me` + loading nháy.
+`fetchMe()` là single-flight để StrictMode/route transition không tạo nhiều
+request đồng thời. Khi `LoginPage` kiểm tra được phiên hợp lệ, trang ghi user
+và trạng thái `authenticated` vào store trước khi điều hướng sang route bảo vệ.
+
+Tab đang mở kiểm tra `/version.json` khi quay lại foreground/focus và mỗi 5
+phút. Nếu server có build mới, app chỉ hiện banner để người dùng chủ động tải
+lại sau khi đã lưu dữ liệu; không ép reload giữa thao tác.
+
 1. Chưa có cookie → `RequireAuth` nhận 401 từ `/me` → redirect `/login?redirect=<path hiện tại>`.
 2. `LoginPage` submit `POST /login` (qua `api.ts` `loginRequest`) — thành công thì:
    - Có `redirect` hợp lệ (path nội bộ, hoặc domain con nằm trong `VITE_ALLOWED_REDIRECT_SUFFIX` —
@@ -95,7 +120,7 @@ cho 1 trang có vài panel chuyển qua lại, không cần nested route.
 | Thông tin cá nhân | `ProfilePanel` | Sửa họ tên/email/sđt/giới tính/ngày sinh, đổi avatar (upload thật, không phải URL). Hiển thị thêm (chỉ đọc): tài khoản/chức vụ/phòng ban/chi nhánh |
 | Mật khẩu | `PasswordPanel` | Đổi mật khẩu (mật khẩu cũ + mới + xác nhận) |
 | Phiên đăng nhập | `SessionsPanel` | Liệt kê thiết bị đang đăng nhập (gộp theo trình duyệt+hệ điều hành đoán từ User-Agent), thu hồi từng phiên (trừ phiên hiện tại) |
-| Quản lý ứng dụng | `AppsAdminPanel` | **Chỉ admin** — CRUD app hiển thị ở trang chủ + chọn người được truy cập từng app. BE tự chặn 403 nếu gọi thẳng API, ẩn tab chỉ là UX |
+| Quản lý ứng dụng | `AppsAdminPanel` | **Chỉ admin** — CRUD app; bảng hiển thị grant trực tiếp/tổng user; modal tải danh sách user khi mở, checkbox phản ánh quyền hiện tại và bộ lọc “Chỉ người chưa được phân quyền” chỉ ẩn các dòng đã chọn. Khi lưu, frontend tính delta thêm/gỡ. BE tự chặn 403 nếu gọi thẳng API, ẩn tab chỉ là UX |
 
 Tab admin ẩn ở FE **không phải lớp bảo vệ duy nhất** — `api-sso` có `requireAdmin` riêng, xem
 `api-sso/docs/architecture.md`.

@@ -1,5 +1,5 @@
 import { LaptopOutlined } from '@ant-design/icons';
-import { App as AntdApp, Button, List, Spin, Tag } from 'antd';
+import { App as AntdApp, Button, List, Skeleton, Tag } from 'antd';
 import { useEffect, useState } from 'react';
 
 import { getSessions, revokeSessionRequest, type SsoSession } from '../../api';
@@ -114,7 +114,8 @@ export default function SessionsPanel() {
   if (sessions === null) {
     return (
       <div className="ssoPanel">
-        <Spin />
+        <h2>Phiên đăng nhập</h2>
+        <Skeleton active title={{ width: '38%' }} paragraph={{ rows: 5 }} />
       </div>
     );
   }

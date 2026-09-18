@@ -1,6 +1,7 @@
 import { CheckOutlined, LockOutlined, UserOutlined } from '@ant-design/icons';
 import {
   App as AntdApp,
+  Alert,
   Button,
   Checkbox,
   Flex,
@@ -18,6 +19,7 @@ import loginBadge from '../assets/login-badge.json';
 import { forgotPasswordRequest, getMe, loginRequest, refreshRequest } from '../api';
 import { PageLoading } from '../components/PageLoading';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useSessionStore } from '../store/session';
 import { RULES_FORM } from '../validator';
 
 const BRAND_NAME = 'XDHY';
@@ -64,7 +66,9 @@ export default function LoginPage() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [forgotLoading, setForgotLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [sessionCheckFailed, setSessionCheckFailed] = useState(false);
   const sessionCheckStarted = useRef(false);
+  const setSessionUser = useSessionStore((s) => s.setUser);
 
   const redirectTo = useMemo(
     () => safeRedirectTarget(new URLSearchParams(window.location.search).get('redirect')),
@@ -89,6 +93,7 @@ export default function LoginPage() {
       try {
         const me = await getMe();
         if (me.ok) {
+          setSessionUser(me.data);
           continueToApp();
           return;
         }
@@ -97,19 +102,27 @@ export default function LoginPage() {
         // Cấp lại access token rồi kiểm tra lần cuối trước khi hiện form.
         if (me.status === 401 || me.status === 403) {
           const refreshed = await refreshRequest();
-          if (refreshed.ok && (await getMe()).ok) {
-            continueToApp();
-            return;
+          if (refreshed.ok) {
+            const refreshedMe = await getMe();
+            if (refreshedMe.ok) {
+              setSessionUser(refreshedMe.data);
+              continueToApp();
+              return;
+            }
           }
+        } else {
+          setSessionCheckFailed(true);
         }
       } catch {
-        // Lỗi mạng hoặc không có phiên: vẫn cho phép người dùng đăng nhập tay.
+        // Lỗi hạ tầng khác với "không có phiên": vẫn cho phép đăng nhập tay
+        // nhưng báo rõ để user không submit lặp trong khi server đang lỗi.
+        setSessionCheckFailed(true);
       }
       setCheckingSession(false);
     };
 
     void checkSession();
-  }, [navigate, redirectTo]);
+  }, [navigate, redirectTo, setSessionUser]);
 
   const illustrationRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -213,6 +226,16 @@ export default function LoginPage() {
                   alt="Logo"
                   onError={(e) => (e.currentTarget.style.display = 'none')}
                 />
+
+                {sessionCheckFailed && (
+                  <Alert
+                    type="warning"
+                    showIcon
+                    message="Chưa kiểm tra được phiên hiện tại"
+                    description="Bạn vẫn có thể đăng nhập hoặc thử tải lại trang khi kết nối ổn định."
+                    style={{ marginBottom: 20 }}
+                  />
+                )}
 
                 {view === 'login' ? (
                   <>

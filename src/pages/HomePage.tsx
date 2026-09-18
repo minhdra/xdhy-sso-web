@@ -1,6 +1,6 @@
-import { ArrowRightOutlined } from '@ant-design/icons';
-import { App as AntdApp, Empty, Spin, Typography } from 'antd';
-import { useEffect, useState } from 'react';
+import { ArrowRightOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Alert, Button, Empty, Skeleton, Tag, Typography } from 'antd';
+import { useCallback, useEffect, useState } from 'react';
 
 import { getApps, type SsoApp } from '../api';
 import AppHeader from '../components/AppHeader';
@@ -9,18 +9,28 @@ import { useSessionStore } from '../store/session';
 
 export default function HomePage() {
   useDocumentTitle('Ứng dụng nội bộ');
-  const { notification } = AntdApp.useApp();
   const user = useSessionStore((s) => s.user);
   const [apps, setApps] = useState<SsoApp[] | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    getApps()
-      .then((res) => setApps(res.ok ? res.data : []))
-      .catch(() => {
-        notification.error({ message: 'Không tải được danh sách ứng dụng.' });
-        setApps([]);
-      });
-  }, [notification]);
+  const loadApps = useCallback(async (preserveData = false) => {
+    setLoadError(false);
+    if (preserveData) setRefreshing(true);
+    else setApps(null);
+    try {
+      const res = await getApps();
+      if (!res.ok) throw new Error(res.data.message);
+      setApps(res.data);
+    } catch {
+      setLoadError(true);
+      setApps((current) => current ?? []);
+    } finally {
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => void loadApps(), [loadApps]);
 
   return (
     <div className="ssoShell ssoHomeShell">
@@ -33,23 +43,47 @@ export default function HomePage() {
           Chọn một ứng dụng để tiếp tục. Bạn đã đăng nhập một lần và dùng chung cho tất cả.
         </Typography.Text>
 
+        {loadError && (
+          <Alert
+            className="ssoHome-alert"
+            type="error"
+            showIcon
+            message="Chưa thể tải danh sách ứng dụng"
+            description="Phiên đăng nhập vẫn được giữ. Bạn có thể thử kết nối lại mà không cần đăng nhập lại."
+            action={<Button icon={<ReloadOutlined />} loading={refreshing} onClick={() => void loadApps(true)}>Thử lại</Button>}
+          />
+        )}
+
         {apps === null ? (
-          <div className="ssoHome-loading">
-            <Spin size="large" />
+          <div className="ssoAppGrid" aria-label="Đang tải danh sách ứng dụng">
+            {Array.from({ length: 4 }, (_, index) => (
+              <div className="ssoAppCard ssoAppCard-skeleton" key={index}>
+                <Skeleton.Avatar active shape="square" size={46} />
+                <Skeleton active title={{ width: '48%' }} paragraph={{ rows: 2 }} />
+              </div>
+            ))}
           </div>
-        ) : apps.length === 0 ? (
+        ) : apps.length === 0 && !loadError ? (
           <Empty description="Chưa có ứng dụng nào được cấp quyền" style={{ marginTop: 48 }} />
         ) : (
-          <div className="ssoAppGrid">
+          <div className={`ssoAppGrid${refreshing ? ' is-refreshing' : ''}`}>
             {apps.map((app) => (
-              <a key={app.app_id} href={app.url || undefined} className="ssoAppCard">
+              <a
+                key={app.app_id}
+                href={app.url || undefined}
+                className={`ssoAppCard${app.url ? '' : ' is-unavailable'}`}
+                aria-disabled={!app.url}
+                onClick={(event) => { if (!app.url) event.preventDefault(); }}
+              >
                 <span className="ssoAppCard-icon" style={{ background: app.color }}>
                   {(app.app_name.trim() || app.app_key).charAt(0).toUpperCase()}
                 </span>
                 <span className="ssoAppCard-body">
                   <span className="ssoAppCard-name">{app.app_name || app.app_key}</span>
                   <span className="ssoAppCard-desc">{app.description}</span>
-                  <span className="ssoAppCard-action">Mở ứng dụng <ArrowRightOutlined /></span>
+                  <span className="ssoAppCard-action">
+                    {app.url ? <>Mở ứng dụng <ArrowRightOutlined /></> : <Tag>Chưa cấu hình URL</Tag>}
+                  </span>
                 </span>
               </a>
             ))}

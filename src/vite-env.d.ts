@@ -9,3 +9,10 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+declare const __APP_BUILD_INFO__: {
+  readonly app: 'sso-web';
+  readonly version: string;
+  readonly buildId: string;
+  readonly builtAt: string;
+};

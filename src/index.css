@@ -51,6 +51,13 @@ render (build-web cũng không theo OS, luôn mặc định light). */
   --shell-bg: linear-gradient(165deg, #f1f4f9 0%, #e7ecf3 100%);
   --shadow-card: 0 4px 16px 0 rgba(20, 30, 40, 0.06);
   --shadow-hover: 0 12px 32px 0 rgba(20, 30, 40, 0.12);
+  --motion-press: 140ms;
+  --motion-control: 200ms;
+  --motion-reveal: 280ms;
+  --motion-card-reveal: 380ms;
+  --motion-highlight: 760ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 :root[data-theme="dark"] {
   --color-primary-soft: rgba(37, 99, 166, 0.22);
@@ -73,6 +80,47 @@ PageLoading.tsx, cùng công thức đã dùng ở build-web. */
   filter: invert(1) hue-rotate(180deg);
 }
 
+.sessionLoading,
+.sessionState {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  background: var(--shell-bg);
+}
+.sessionLoading {
+  align-content: center;
+  gap: 4px;
+}
+.sessionLoading-copy {
+  display: grid;
+  gap: 5px;
+  text-align: center;
+  color: var(--color-text);
+}
+.sessionLoading-copy strong {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+.sessionLoading-copy span {
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+}
+.sessionState .ant-result {
+  width: min(100%, 620px);
+}
+
+.version-update-banner {
+  position: fixed;
+  z-index: 1000;
+  top: 12px;
+  left: 50%;
+  width: min(calc(100% - 24px), 680px);
+  transform: translateX(-50%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -92,6 +140,36 @@ body {
     "Segoe UI",
     Roboto,
     sans-serif;
+}
+
+.ant-btn,
+.ssoAccount-nav button,
+.ssoAppCard {
+  transition-duration: var(--motion-control) !important;
+  transition-timing-function: var(--ease-standard) !important;
+}
+.ant-btn:active,
+.ssoAccount-nav button:active,
+.ssoAppCard:active {
+  transform: scale(0.98);
+  transition-duration: var(--motion-press) !important;
+}
+.ssoAppGrid > .ssoAppCard {
+  animation: sso-card-reveal var(--motion-card-reveal) var(--ease-emphasized) both;
+}
+.ssoAppGrid > .ssoAppCard:nth-child(2) { animation-delay: 60ms; }
+.ssoAppGrid > .ssoAppCard:nth-child(3) { animation-delay: 120ms; }
+.ssoAppGrid > .ssoAppCard:nth-child(4) { animation-delay: 180ms; }
+.ssoAccount-panel > .ssoPanel {
+  animation: sso-panel-reveal var(--motion-reveal) var(--ease-emphasized) both;
+}
+@keyframes sso-card-reveal {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes sso-panel-reveal {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .page {
@@ -165,6 +243,14 @@ body {
   }
 }
 @media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
   .page::before,
   .page::after,
   .ssoShell::before,
@@ -570,15 +656,18 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
   font-size: 0.875rem;
   margin-bottom: 32px;
 }
-.ssoHome-loading {
-  display: grid;
-  place-items: center;
-  padding: 72px 0;
+.ssoHome-alert {
+  margin: 0 0 20px;
 }
 .ssoAppGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 18px;
+}
+.ssoAppGrid.is-refreshing {
+  opacity: 0.62;
+  pointer-events: none;
+  transition: opacity 0.18s ease;
 }
 @media (max-width: 820px) {
   .ssoAppGrid {
@@ -622,6 +711,23 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
     var(--color-card-bg) 94%,
     var(--color-primary)
   );
+}
+.ssoAppCard-skeleton {
+  pointer-events: none;
+}
+.ssoAppCard-skeleton .ant-skeleton {
+  min-width: 0;
+}
+.ssoAppCard.is-unavailable {
+  cursor: not-allowed;
+  box-shadow: none;
+  opacity: 0.72;
+}
+.ssoAppCard.is-unavailable:hover {
+  background: var(--color-card-bg);
+  border-color: var(--color-border);
+  box-shadow: none;
+  transform: none;
 }
 .ssoAppCard-icon {
   flex: none;
@@ -970,6 +1076,182 @@ textarea::placeholder,
    của task-web (ProjectMemberTable). */
 .ssoAccessTable-groupRow > td {
   background: var(--color-primary-soft) !important;
+}
+
+.ssoAppsAdmin-table {
+  margin-top: 20px;
+}
+.ssoAppsAdmin-alert {
+  margin-top: 16px;
+}
+.ssoAppsAdmin-appIdentity {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+.ssoAppsAdmin-appIdentity > div,
+.ssoAccess-userIdentity {
+  display: grid;
+  min-width: 0;
+}
+.ssoAppsAdmin-appIdentity strong {
+  font-weight: 600;
+}
+.ssoAppsAdmin-appIdentity small,
+.ssoAccess-userIdentity small {
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+}
+.ssoAppsAdmin-appMark {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  flex: none;
+}
+.ssoAppsAdmin-url {
+  display: block;
+  max-width: 24rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78125rem;
+}
+.ssoAppsAdmin-accessCount {
+  padding-inline: 8px;
+  color: var(--color-primary);
+}
+.ssoAppsAdmin-accessCount span {
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+.ssoAppsAdmin-colorInput {
+  width: 72px;
+  padding: 4px;
+}
+.ssoAppsAdmin-fullWidth {
+  width: 100%;
+}
+.ssoAccess-summary {
+  display: grid;
+  grid-template-columns: max-content max-content 1fr;
+  align-items: center;
+  gap: 14px 24px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  background: var(--color-primary-soft);
+}
+.ssoAccess-summary > div {
+  display: grid;
+}
+.ssoAccess-summary strong {
+  font-size: 1.25rem;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+.ssoAccess-summary span,
+.ssoAccess-summary p {
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+}
+.ssoAccess-summary p {
+  margin: 0;
+  line-height: 1.5;
+}
+.ssoAccess-toolbar,
+.ssoAccess-filterBar,
+.ssoAccess-selectionBar,
+.ssoAccess-paginationRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.ssoAccess-viewFilter {
+  display: flex;
+  align-items: center;
+  min-height: 42px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+}
+.ssoAccess-toolbar .ant-input-search,
+.ssoAccess-filterBar .ant-input-search {
+  flex: 1;
+}
+.ssoAccess-filterBar .ant-select {
+  width: 210px;
+}
+.ssoAccess-selectionBar {
+  justify-content: space-between;
+  min-height: 40px;
+  padding: 6px 10px 6px 14px;
+  border-radius: 9px;
+  background: var(--color-primary-soft);
+}
+.ssoAccess-table {
+  margin-top: 10px;
+}
+.ssoAccess-table .ssoAccessTable-groupRow > td:last-child:not(:first-child) {
+  color: transparent;
+}
+.ssoAccess-userIdentity span {
+  font-weight: 500;
+}
+.ssoAccess-saveLabel {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.ssoAccess-paginationRow {
+  justify-content: space-between;
+  min-height: 32px;
+  margin: 12px 0 0;
+  color: var(--color-text-secondary);
+}
+.ssoAccess-addHint {
+  margin-top: 0;
+}
+
+/* Tất cả modal SSO dùng cùng một nhịp dọc, không trôi quá thấp trên màn hình. */
+.ant-modal {
+  top: 72px;
+  padding-bottom: 72px;
+}
+.ant-modal-wrap {
+  overflow-y: hidden;
+}
+.ant-modal-content {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - 144px);
+  overflow: hidden;
+}
+.ant-modal-body {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+@media (max-width: 620px) {
+  .ssoAccess-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+  .ssoAccess-summary p {
+    grid-column: 1 / -1;
+  }
+  .ssoAccess-toolbar,
+  .ssoAccess-filterBar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .ssoAccess-filterBar .ant-select {
+    width: 100%;
+  }
 }
 :root {
   --app-font-size: 0.8125rem;

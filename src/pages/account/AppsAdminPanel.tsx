@@ -1,502 +1,208 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined, TeamOutlined } from '@ant-design/icons';
-import {
-  App as AntdApp,
-  Avatar,
-  Button,
-  Checkbox,
-  Form,
-  Input,
-  InputNumber,
-  Modal,
-  Pagination,
-  Popconfirm,
-  Space,
-  Table,
-  Tag,
-  Typography,
-} from 'antd';
-import { useEffect, useState } from 'react';
+import { Alert, App as AntdApp, Avatar, Button, Checkbox, Empty, Form, Input, InputNumber, Modal, Popconfirm, Skeleton, Space, Table, Tag, Tooltip, Typography } from 'antd';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import {
-  avatarSrc,
-  getAdminApps,
-  getAdminUsers,
-  getAppAccessRequest,
-  upsertAppRequest,
-  deleteAppRequest,
-  setAppAccessRequest,
-  type AdminApp,
-  type AdminUser,
-} from '../../api';
+import { addAppAccessRequest, avatarSrc, deleteAppRequest, getAdminApps, getAdminUsers, getAppAccessRequest, removeAppAccessRequest, upsertAppRequest, type AdminApp, type AdminUser } from '../../api';
 import { RULES_FORM } from '../../validator';
 
-interface AppFormValues {
-  app_id?: string | null;
-  app_key: string;
-  app_name: string;
-  description?: string;
-  url?: string;
-  color?: string;
-  sort_order?: number;
-}
-
-// Bảng "Phân quyền truy cập" gồm 2 loại hàng trộn chung 1 danh sách - hàng
-// "chức vụ" (thanh tiêu đề nhóm, nền nhạt) + hàng "người" (checkbox chọn) -
-// giống cách task-web trình bày bảng thành viên công trình
-// (task-web/src/modules/task/construction-project-permission/components/ProjectMemberTable.tsx),
-// chỉ khác là quyền ở đây chỉ có 2 trạng thái (có/không), không phải nhiều
-// cấp độ - nên dùng checkbox thay vì dropdown "Quyền".
-type AccessRow =
-  | { kind: 'position'; key: string; position_name: string }
-  | { kind: 'user'; key: string; user: AdminUser };
-
+interface AppFormValues { app_id?: string | null; app_key: string; app_name: string; description?: string; url?: string; color?: string; sort_order?: number }
+type AccessRow<T extends AdminUser> = { kind: 'position'; key: string; position_name: string; users: T[] } | { kind: 'user'; key: string; user: T };
 const UNASSIGNED_POSITION = 'Chưa gán chức vụ';
-const ACCESS_PAGE_SIZE = 20;
 
-const sortByPositionThenName = (users: AdminUser[]): AdminUser[] =>
-  [...users].sort((a, b) => {
-    const posA = a.position_name || UNASSIGNED_POSITION;
-    const posB = b.position_name || UNASSIGNED_POSITION;
-    return posA !== posB
-      ? posA.localeCompare(posB, 'vi')
-      : a.full_name.localeCompare(b.full_name, 'vi');
+const buildAccessRows = <T extends AdminUser>(users: T[]): AccessRow<T>[] => {
+  const groups = new Map<string, T[]>();
+  users.forEach((user) => {
+    const position = user.position_name || UNASSIGNED_POSITION;
+    groups.set(position, [...(groups.get(position) ?? []), user]);
   });
-
-// Chỉ nhận danh sách của ĐÚNG 1 TRANG (đã cắt theo phân trang) - chèn 1 hàng
-// "chức vụ" mỗi khi chức vụ đổi so với người liền trước. Nếu 1 nhóm bị cắt
-// ngang bởi ranh giới trang, trang sau lặp lại đúng thanh tiêu đề đó (chấp
-// nhận được - tránh phải đồng bộ trạng thái cuộn phức tạp hơn).
-const buildAccessRows = (pageUsers: AdminUser[]): AccessRow[] => {
-  const rows: AccessRow[] = [];
-  let lastPosition: string | null = null;
-  for (const u of pageUsers) {
-    const pos = u.position_name || UNASSIGNED_POSITION;
-    if (pos !== lastPosition) {
-      rows.push({ kind: 'position', key: `pos-${pos}-${u.user_id}`, position_name: pos });
-      lastPosition = pos;
-    }
-    rows.push({ kind: 'user', key: u.user_id, user: u });
-  }
-  return rows;
+  return [...groups.entries()].sort(([a], [b]) => a.localeCompare(b, 'vi')).flatMap(([position, members]) => [
+    { kind: 'position' as const, key: `position-${position}`, position_name: position, users: members },
+    ...members.sort((a, b) => a.full_name.localeCompare(b.full_name, 'vi')).map((user) => ({ kind: 'user' as const, key: user.user_id, user })),
+  ]);
 };
 
-// Màu nền FALLBACK khi không có ảnh avatar thật (antd Avatar chỉ hiện
-// background này lúc `src` rỗng/tải lỗi - ảnh thật luôn nằm đè lên trên).
-// Deterministic theo user_id (không lưu DB), không mang ý nghĩa gì, chỉ để
-// phân biệt trực quan giữa các người trong danh sách dài.
 const avatarColor = (id: string): string => {
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-  return `hsl(${hash % 360}, 55%, 45%)`;
+  return `hsl(${hash % 360}, 45%, 42%)`;
 };
+
+const UserIdentity = ({ user }: { user: AdminUser }) => (
+  <Space size={10}>
+    <Avatar shape="square" size={30} src={avatarSrc(user.avatar)} style={{ background: avatarColor(user.user_id), flex: 'none' }}>
+      {user.full_name.trim().charAt(0).toUpperCase()}
+    </Avatar>
+    <div className="ssoAccess-userIdentity"><span>{user.full_name}</span><small>@{user.user_name}</small></div>
+  </Space>
+);
 
 export default function AppsAdminPanel() {
   const { notification } = AntdApp.useApp();
   const [apps, setApps] = useState<AdminApp[] | null>(null);
-  const [users, setUsers] = useState<AdminUser[] | null>(null);
-
+  const [appsError, setAppsError] = useState(false);
   const [appModalOpen, setAppModalOpen] = useState(false);
   const [appForm] = Form.useForm<AppFormValues>();
   const [savingApp, setSavingApp] = useState(false);
-
   const [accessApp, setAccessApp] = useState<AdminApp | null>(null);
-  const [accessUserIds, setAccessUserIds] = useState<string[]>([]);
+  const [accessUsers, setAccessUsers] = useState<AdminUser[] | null>(null);
+  const [accessError, setAccessError] = useState(false);
   const [accessSearch, setAccessSearch] = useState('');
-  const [accessPage, setAccessPage] = useState(1);
+  const [originalAccessIds, setOriginalAccessIds] = useState<string[]>([]);
+  const [accessUserIds, setAccessUserIds] = useState<string[]>([]);
   const [savingAccess, setSavingAccess] = useState(false);
+  const [showUnassigned, setShowUnassigned] = useState(false);
 
-  const loadApps = () => {
-    getAdminApps()
-      .then((res) => setApps(res.ok ? res.data : []))
-      .catch(() => {
-        notification.error({ message: 'Không tải được danh sách ứng dụng.' });
-        setApps([]);
-      });
-  };
+  const loadApps = useCallback(async () => {
+    setAppsError(false);
+    try {
+      const res = await getAdminApps();
+      if (!res.ok) throw new Error(res.data.message);
+      setApps(res.data);
+    } catch {
+      setAppsError(true);
+      setApps((current) => current ?? []);
+    }
+  }, []);
+  useEffect(() => void loadApps(), [loadApps]);
 
-  useEffect(() => {
-    loadApps();
-    getAdminUsers()
-      .then((res) => setUsers(res.ok ? res.data : []))
-      .catch(() => setUsers([]));
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const loadAccessUsers = useCallback(async (appId: string) => {
+    setAccessUsers(null);
+    setAccessError(false);
+    try {
+      const [usersRes, accessRes] = await Promise.all([getAdminUsers(), getAppAccessRequest(appId)]);
+      if (!usersRes.ok || !accessRes.ok) throw new Error('Không tải được danh sách người dùng.');
+      const grantedIds = accessRes.data.map((user) => user.user_id);
+      setAccessUsers(usersRes.data);
+      setOriginalAccessIds(grantedIds);
+      setAccessUserIds(grantedIds);
+    } catch {
+      setAccessError(true);
+      setAccessUsers([]);
+    }
+  }, []);
 
   const openCreate = () => {
     appForm.resetFields();
     appForm.setFieldsValue({ color: '#2563a6', sort_order: (apps?.length ?? 0) + 1 });
     setAppModalOpen(true);
   };
-
-  const openEdit = (app: AdminApp) => {
-    appForm.setFieldsValue({
-      app_id: app.app_id,
-      app_key: app.app_key,
-      app_name: app.app_name,
-      description: app.description ?? '',
-      url: app.url,
-      color: app.color,
-      sort_order: app.sort_order,
-    });
-    setAppModalOpen(true);
-  };
+  const openEdit = (app: AdminApp) => { appForm.setFieldsValue({ ...app, description: app.description ?? '' }); setAppModalOpen(true); };
 
   const handleSaveApp = async (values: AppFormValues) => {
     setSavingApp(true);
     try {
       const res = await upsertAppRequest(values);
-      if (!res.ok) {
-        notification.error({ message: res.data.message || 'Không lưu được ứng dụng.' });
-        return;
-      }
+      if (!res.ok) { notification.error({ message: res.data.message || 'Không lưu được ứng dụng.' }); return; }
       notification.success({ message: 'Đã lưu ứng dụng.' });
       setAppModalOpen(false);
-      loadApps();
-    } catch {
-      notification.error({ message: 'Lỗi kết nối tới server.' });
-    } finally {
-      setSavingApp(false);
-    }
+      void loadApps();
+    } catch { notification.error({ message: 'Không thể kết nối tới máy chủ.' }); }
+    finally { setSavingApp(false); }
   };
 
   const handleDelete = async (app: AdminApp) => {
     try {
       const res = await deleteAppRequest(app.app_id);
-      if (!res.ok) {
-        notification.error({ message: res.data.message || 'Không xoá được.' });
-        return;
-      }
+      if (!res.ok) { notification.error({ message: res.data.message || 'Không xoá được ứng dụng.' }); return; }
+      setApps((current) => current?.filter((item) => item.app_id !== app.app_id) ?? null);
       notification.success({ message: 'Đã xoá ứng dụng.' });
-      loadApps();
-    } catch {
-      notification.error({ message: 'Lỗi kết nối tới server.' });
-    }
+    } catch { notification.error({ message: 'Không thể kết nối tới máy chủ.' }); }
   };
 
-  const openAccess = async (app: AdminApp) => {
-    setAccessApp(app);
-    setAccessUserIds([]);
-    setAccessSearch('');
-    setAccessPage(1);
-    try {
-      const res = await getAppAccessRequest(app.app_id);
-      if (res.ok) setAccessUserIds(res.data.map((u) => u.user_id));
-    } catch {
-      notification.error({ message: 'Không tải được danh sách người được cấp quyền.' });
-    }
+  const openAccess = (app: AdminApp) => {
+    setAccessApp(app); setShowUnassigned(false); setAccessSearch(''); void loadAccessUsers(app.app_id);
   };
 
   const handleSaveAccess = async () => {
     if (!accessApp) return;
+    const original = new Set(originalAccessIds);
+    const next = new Set(accessUserIds);
+    const added = accessUserIds.filter((id) => !original.has(id));
+    const removed = originalAccessIds.filter((id) => !next.has(id));
+    if (added.length === 0 && removed.length === 0) return;
     setSavingAccess(true);
     try {
-      const res = await setAppAccessRequest(accessApp.app_id, accessUserIds);
-      if (!res.ok) {
-        notification.error({ message: res.data.message || 'Không lưu được.' });
-        return;
+      if (added.length > 0) {
+        const res = await addAppAccessRequest(accessApp.app_id, added);
+        if (!res.ok) throw new Error(res.data.message);
       }
-      notification.success({ message: `Đã cập nhật quyền truy cập "${accessApp.app_name}".` });
+      if (removed.length > 0) {
+        const res = await removeAppAccessRequest(accessApp.app_id, removed);
+        if (!res.ok) throw new Error(res.data.message);
+      }
+      setOriginalAccessIds(accessUserIds);
+      notification.success({ message: 'Đã cập nhật quyền truy cập.' });
       setAccessApp(null);
-      loadApps();
+      void loadApps();
     } catch {
-      notification.error({ message: 'Lỗi kết nối tới server.' });
-    } finally {
-      setSavingAccess(false);
+      notification.error({ message: 'Không thể cập nhật đầy đủ quyền truy cập. Danh sách đã được tải lại.' });
+      void loadAccessUsers(accessApp.app_id);
+      void loadApps();
     }
+    finally { setSavingAccess(false); }
   };
 
-  const toggleAccessUser = (userId: string, checked: boolean) => {
-    setAccessUserIds((prev) =>
-      checked ? [...prev, userId] : prev.filter((id) => id !== userId),
+  const filteredAccessUsers = useMemo(() => {
+    const keyword = accessSearch.trim().toLocaleLowerCase('vi');
+    return (accessUsers ?? []).filter((user) =>
+      (!showUnassigned || !accessUserIds.includes(user.user_id)) &&
+      (!keyword || user.full_name.toLocaleLowerCase('vi').includes(keyword) || user.user_name.toLocaleLowerCase('vi').includes(keyword)),
     );
+  }, [accessSearch, accessUserIds, accessUsers, showUnassigned]);
+  const accessRows = useMemo(() => buildAccessRows(filteredAccessUsers), [filteredAccessUsers]);
+  const accessChanges = useMemo(() => {
+    const original = new Set(originalAccessIds);
+    const next = new Set(accessUserIds);
+    return {
+      added: accessUserIds.filter((id) => !original.has(id)).length,
+      removed: originalAccessIds.filter((id) => !next.has(id)).length,
+    };
+  }, [accessUserIds, originalAccessIds]);
+  const hasAccessChanges = accessChanges.added > 0 || accessChanges.removed > 0;
+
+  const toggleIds = (ids: string[], checked: boolean, selected: string[], setSelected: (ids: string[]) => void) => {
+    const next = new Set(selected); ids.forEach((id) => checked ? next.add(id) : next.delete(id)); setSelected([...next]);
   };
 
-  const toggleAccessGroup = (userIds: string[], checked: boolean) => {
-    setAccessUserIds((prev) => {
-      const set = new Set(prev);
-      userIds.forEach((id) => (checked ? set.add(id) : set.delete(id)));
-      return Array.from(set);
-    });
-  };
+  const accessColumns = <T extends AdminUser>(selected: string[], setSelected: (ids: string[]) => void) => [
+    { title: '', key: 'select', width: 46, render: (_: unknown, row: AccessRow<T>) => {
+      const ids = row.kind === 'position' ? row.users.map((user) => user.user_id) : [row.user.user_id];
+      const selectedCount = ids.filter((id) => selected.includes(id)).length;
+      return <Checkbox aria-label={row.kind === 'position' ? `Chọn nhóm ${row.position_name}` : `Chọn ${row.user.full_name}`} checked={ids.length > 0 && selectedCount === ids.length} indeterminate={selectedCount > 0 && selectedCount < ids.length} onChange={(event) => toggleIds(ids, event.target.checked, selected, setSelected)} />;
+    } },
+    { title: 'Người / Chức vụ', key: 'name', render: (_: unknown, row: AccessRow<T>) => row.kind === 'position' ? <Space size={8}><Typography.Text strong>{row.position_name}</Typography.Text><Tag>{row.users.length} người</Tag></Space> : <UserIdentity user={row.user} /> },
+  ];
 
-  const accessSearchLower = accessSearch.trim().toLowerCase();
-  // Sort + lọc trên TOÀN BỘ danh sách trước, rồi mới cắt trang - đếm/chọn cả
-  // nhóm (toggleAccessGroup) phải dựa trên đúng thành viên thật của chức vụ
-  // đó, không chỉ những người đang hiện ở trang hiện tại.
-  const filteredAccessUsers = sortByPositionThenName(
-    (users ?? []).filter(
-      (u) =>
-        !accessSearchLower ||
-        u.full_name.toLowerCase().includes(accessSearchLower) ||
-        u.user_name.toLowerCase().includes(accessSearchLower),
-    ),
-  );
-  const accessTotal = filteredAccessUsers.length;
-  const accessPageUsers = filteredAccessUsers.slice(
-    (accessPage - 1) * ACCESS_PAGE_SIZE,
-    accessPage * ACCESS_PAGE_SIZE,
-  );
-  const accessRows = buildAccessRows(accessPageUsers);
-  const membersOfPosition = (pos: string) =>
-    filteredAccessUsers
-      .filter((u) => (u.position_name || UNASSIGNED_POSITION) === pos)
-      .map((u) => u.user_id);
+  return <div className="ssoPanel ssoAppsAdmin">
+    <div className="ssoPanel-headRow"><div><h2>Quản lý ứng dụng</h2><p className="ssoPanel-hint">Cấu hình ứng dụng và những người được cấp quyền truy cập trực tiếp.</p></div><Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>Thêm ứng dụng</Button></div>
+    {appsError && <Alert className="ssoAppsAdmin-alert" type="error" showIcon message="Không tải được danh sách ứng dụng" action={<Button size="small" onClick={() => void loadApps()}>Thử lại</Button>} />}
+    {apps === null ? <Skeleton className="ssoAppsAdmin-table" active title={false} paragraph={{ rows: 6 }} /> : <Table<AdminApp> className="ssoAppsAdmin-table" rowKey="app_id" dataSource={apps} pagination={false} locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có ứng dụng" /> }} columns={[
+      { title: 'Ứng dụng', dataIndex: 'app_name', render: (_, app) => <div className="ssoAppsAdmin-appIdentity"><span className="ssoAppsAdmin-appMark" style={{ background: app.color }}>{app.app_name.trim().charAt(0).toUpperCase()}</span><div><strong>{app.app_name}</strong><small>{app.app_key}</small></div></div> },
+      { title: 'URL', dataIndex: 'url', responsive: ['md'], render: (url: string) => url ? <span className="ssoAppsAdmin-url">{url}</span> : <Tag color="warning">Chưa cấu hình URL</Tag> },
+      { title: 'Người truy cập', dataIndex: 'direct_access_count', width: 190, render: (_: number, app) => <Tooltip title={`${app.direct_access_count} người được cấp trực tiếp. Quản trị viên hệ thống luôn có quyền truy cập.`}><Button className="ssoAppsAdmin-accessCount" type="text" icon={<TeamOutlined />} onClick={() => openAccess(app)}><span>{app.direct_access_count} / {app.eligible_user_count}</span> người</Button></Tooltip> },
+      { title: '', key: 'actions', width: 96, render: (_, app) => <Space size={2}><Button type="text" icon={<EditOutlined />} onClick={() => openEdit(app)} aria-label={`Sửa ${app.app_name}`} /><Popconfirm title="Xoá ứng dụng này?" description="Toàn bộ quyền đã cấp cũng bị xoá." okText="Xoá" cancelText="Huỷ" okButtonProps={{ danger: true }} onConfirm={() => handleDelete(app)}><Button type="text" danger icon={<DeleteOutlined />} aria-label={`Xoá ${app.app_name}`} /></Popconfirm></Space> },
+    ]} />}
 
-  return (
-    <div className="ssoPanel">
-      <div className="ssoPanel-headRow">
-        <div>
-          <h2 style={{ marginBottom: 4 }}>Quản lý ứng dụng</h2>
-          <p className="ssoPanel-hint" style={{ margin: 0 }}>
-            Ứng dụng hiển thị ở trang chủ + người được phép truy cập từng ứng dụng.
-          </p>
-        </div>
-        <Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>
-          Thêm ứng dụng
-        </Button>
+    <Modal title={appForm.getFieldValue('app_id') ? 'Sửa ứng dụng' : 'Thêm ứng dụng'} open={appModalOpen} onCancel={() => setAppModalOpen(false)} onOk={() => appForm.submit()} confirmLoading={savingApp} okText="Lưu" cancelText="Huỷ" destroyOnClose>
+      <Form form={appForm} layout="vertical" onFinish={handleSaveApp}>
+        <Form.Item name="app_id" hidden><Input /></Form.Item>
+        <Form.Item name="app_key" label="Mã ứng dụng" rules={[...RULES_FORM.required, { pattern: /^[a-z0-9-]+$/, message: 'Chỉ chữ thường, số và dấu gạch ngang (vd: build-web)' }]}><Input placeholder="vd: chat" /></Form.Item>
+        <Form.Item name="app_name" label="Tên hiển thị" rules={RULES_FORM.required}><Input placeholder="vd: Trò chuyện" /></Form.Item>
+        <Form.Item name="description" label="Mô tả ngắn"><Input placeholder="Hiện dưới tên ở trang chủ" /></Form.Item>
+        <Form.Item name="url" label="URL" rules={[{ type: 'url', message: 'URL không hợp lệ' }]}><Input placeholder="https://..." /></Form.Item>
+        <Form.Item name="color" label="Màu icon"><Input type="color" className="ssoAppsAdmin-colorInput" /></Form.Item>
+        <Form.Item name="sort_order" label="Thứ tự hiển thị"><InputNumber min={0} className="ssoAppsAdmin-fullWidth" /></Form.Item>
+      </Form>
+    </Modal>
+
+    <Modal title={accessApp ? `Người truy cập · ${accessApp.app_name}` : ''} open={!!accessApp} onCancel={() => { setAccessApp(null); setShowUnassigned(false); }} onOk={handleSaveAccess} confirmLoading={savingAccess} okButtonProps={{ disabled: !hasAccessChanges || accessUsers === null }} okText={<span className="ssoAccess-saveLabel">Lưu thay đổi · Thêm {accessChanges.added} · Gỡ {accessChanges.removed}</span>} cancelText="Huỷ" width={720} destroyOnClose>
+      <div className="ssoAccess-summary"><div><strong>{accessApp?.direct_access_count ?? 0}</strong><span>được cấp trực tiếp</span></div><div><strong>{accessApp?.eligible_user_count ?? 0}</strong><span>người dùng đủ điều kiện</span></div><p>Quản trị viên hệ thống luôn có quyền truy cập và không xuất hiện trong danh sách grant.</p></div>
+      <div className="ssoAccess-viewFilter">
+        <Checkbox checked={showUnassigned} onChange={(event) => setShowUnassigned(event.target.checked)}>Chỉ người chưa được phân quyền</Checkbox>
       </div>
-
-      <Table<AdminApp>
-        style={{ marginTop: 20 }}
-        rowKey="app_id"
-        loading={apps === null}
-        dataSource={apps ?? []}
-        pagination={false}
-        columns={[
-          {
-            title: 'Ứng dụng',
-            dataIndex: 'app_name',
-            render: (_, app) => (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span
-                  style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: 8,
-                    background: app.color,
-                    color: '#fff',
-                    display: 'grid',
-                    placeItems: 'center',
-                    fontWeight: 700,
-                    fontSize: '0.8125rem',
-                    flex: 'none',
-                  }}
-                >
-                  {app.app_name.trim().charAt(0).toUpperCase()}
-                </span>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontWeight: 600 }}>{app.app_name}</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                    {app.app_key}
-                  </div>
-                </div>
-              </div>
-            ),
-          },
-          {
-            title: 'URL',
-            dataIndex: 'url',
-            render: (url: string) =>
-              url ? (
-                <span style={{ fontSize: '0.78125rem' }}>{url}</span>
-              ) : (
-                <Tag color="warning">Chưa cấu hình URL</Tag>
-              ),
-          },
-          {
-            title: 'Quyền truy cập',
-            dataIndex: 'access_count',
-            width: 160,
-            render: (count: number, app) => (
-              <Button size="small" icon={<TeamOutlined />} onClick={() => openAccess(app)}>
-                {count} người
-              </Button>
-            ),
-          },
-          {
-            title: '',
-            key: 'actions',
-            width: 90,
-            render: (_, app) => (
-              <div style={{ display: 'flex', gap: 6 }}>
-                <Button
-                  size="small"
-                  type="text"
-                  icon={<EditOutlined />}
-                  onClick={() => openEdit(app)}
-                  aria-label="Sửa"
-                />
-                <Popconfirm
-                  title="Xoá ứng dụng này?"
-                  description="Toàn bộ quyền truy cập đã cấp cũng bị xoá."
-                  okText="Xoá"
-                  okButtonProps={{ danger: true }}
-                  cancelText="Huỷ"
-                  onConfirm={() => handleDelete(app)}
-                >
-                  <Button size="small" type="text" danger icon={<DeleteOutlined />} aria-label="Xoá" />
-                </Popconfirm>
-              </div>
-            ),
-          },
-        ]}
-      />
-
-      <Modal
-        title={appForm.getFieldValue('app_id') ? 'Sửa ứng dụng' : 'Thêm ứng dụng'}
-        open={appModalOpen}
-        onCancel={() => setAppModalOpen(false)}
-        onOk={() => appForm.submit()}
-        confirmLoading={savingApp}
-        okText="Lưu"
-        cancelText="Huỷ"
-        destroyOnClose
-      >
-        <Form form={appForm} layout="vertical" onFinish={handleSaveApp}>
-          <Form.Item name="app_id" hidden>
-            <Input />
-          </Form.Item>
-          <Form.Item
-            name="app_key"
-            label="Mã ứng dụng"
-            rules={[
-              ...RULES_FORM.required,
-              {
-                pattern: /^[a-z0-9-]+$/,
-                message: 'Chỉ chữ thường, số và dấu gạch ngang (vd: build-web)',
-              },
-            ]}
-          >
-            <Input placeholder="vd: chat" />
-          </Form.Item>
-          <Form.Item name="app_name" label="Tên hiển thị" rules={RULES_FORM.required}>
-            <Input placeholder="vd: Trò chuyện" />
-          </Form.Item>
-          <Form.Item name="description" label="Mô tả ngắn">
-            <Input placeholder="Hiện dưới tên ở trang chủ" />
-          </Form.Item>
-          <Form.Item
-            name="url"
-            label="URL"
-            rules={[{ type: 'url', message: 'URL không hợp lệ' }]}
-          >
-            <Input placeholder="https://..." />
-          </Form.Item>
-          <Form.Item name="color" label="Màu icon">
-            <Input type="color" style={{ width: 72, padding: 4 }} />
-          </Form.Item>
-          <Form.Item name="sort_order" label="Thứ tự hiển thị">
-            <InputNumber min={0} style={{ width: '100%' }} />
-          </Form.Item>
-        </Form>
-      </Modal>
-
-      <Modal
-        title={accessApp ? `Phân quyền truy cập · ${accessApp.app_name}` : ''}
-        open={!!accessApp}
-        onCancel={() => setAccessApp(null)}
-        onOk={handleSaveAccess}
-        confirmLoading={savingAccess}
-        okText="Lưu"
-        cancelText="Huỷ"
-        destroyOnClose
-        width={640}
-      >
-        <p className="ssoPanel-hint" style={{ marginTop: 0 }}>
-          Chỉ những người được chọn dưới đây mới thấy ứng dụng này ở trang chủ. Quản trị viên luôn
-          thấy được mọi ứng dụng. Đã chọn {accessUserIds.length} người.
-        </p>
-        <Input.Search
-          placeholder="Tìm theo tên hoặc tài khoản..."
-          allowClear
-          value={accessSearch}
-          onChange={(e) => {
-            setAccessSearch(e.target.value);
-            setAccessPage(1);
-          }}
-          style={{ marginBottom: 12 }}
-        />
-        <Table<AccessRow>
-          rowKey="key"
-          size="small"
-          bordered
-          loading={users === null}
-          dataSource={accessRows}
-          pagination={false}
-          // Cuộn riêng phần thân bảng (header + ô tìm kiếm + phân trang +
-          // footer Lưu/Huỷ của Modal luôn cố định, không bị đẩy trôi xuống
-          // dưới màn hình khi 1 trang đầy đủ 20 người quá dài).
-          scroll={{ y: 360 }}
-          rowClassName={(row) => (row.kind === 'position' ? 'ssoAccessTable-groupRow' : '')}
-          columns={[
-            {
-              title: '',
-              key: 'select',
-              width: 44,
-              render: (_, row) => {
-                if (row.kind === 'user') {
-                  return (
-                    <Checkbox
-                      checked={accessUserIds.includes(row.user.user_id)}
-                      onChange={(e) => toggleAccessUser(row.user.user_id, e.target.checked)}
-                    />
-                  );
-                }
-                const ids = membersOfPosition(row.position_name);
-                const selectedCount = ids.filter((id) => accessUserIds.includes(id)).length;
-                return (
-                  <Checkbox
-                    checked={ids.length > 0 && selectedCount === ids.length}
-                    indeterminate={selectedCount > 0 && selectedCount < ids.length}
-                    onChange={(e) => toggleAccessGroup(ids, e.target.checked)}
-                  />
-                );
-              },
-            },
-            {
-              title: 'Người / Chức vụ',
-              key: 'name',
-              render: (_, row) => {
-                if (row.kind === 'position') {
-                  return (
-                    <Space size={8}>
-                      <Typography.Text strong>{row.position_name}</Typography.Text>
-                      <Tag>{membersOfPosition(row.position_name).length} người</Tag>
-                    </Space>
-                  );
-                }
-                return (
-                  <Space>
-                    <Avatar
-                      size={26}
-                      src={avatarSrc(row.user.avatar)}
-                      style={{ background: avatarColor(row.user.user_id), flex: 'none' }}
-                    >
-                      {row.user.full_name.trim().charAt(0).toUpperCase()}
-                    </Avatar>
-                    <div>
-                      <div>{row.user.full_name}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
-                        @{row.user.user_name}
-                      </div>
-                    </div>
-                  </Space>
-                );
-              },
-            },
-          ]}
-        />
-        {accessTotal > ACCESS_PAGE_SIZE && (
-          <Pagination
-            style={{ marginTop: 12, textAlign: 'right' }}
-            size="small"
-            current={accessPage}
-            pageSize={ACCESS_PAGE_SIZE}
-            total={accessTotal}
-            onChange={setAccessPage}
-            showSizeChanger={false}
-          />
-        )}
-      </Modal>
-    </div>
-  );
+      <div className="ssoAccess-toolbar"><Input.Search allowClear value={accessSearch} placeholder="Tìm theo tên hoặc tài khoản" onChange={(event) => setAccessSearch(event.target.value)} /></div>
+      {accessError && <Alert type="error" showIcon message="Không tải được danh sách người dùng" action={<Button size="small" onClick={() => accessApp && void loadAccessUsers(accessApp.app_id)}>Thử lại</Button>} />}
+      {accessUsers === null ? <Skeleton active paragraph={{ rows: 6 }} /> : <Table<AccessRow<AdminUser>> className="ssoAccess-table" rowKey="key" size="small" dataSource={accessRows} pagination={false} scroll={{ y: 360 }} rowClassName={(row) => row.kind === 'position' ? 'ssoAccessTable-groupRow' : ''} locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={accessSearch ? 'Không tìm thấy người phù hợp' : 'Tất cả người dùng đã được phân quyền'} /> }} columns={accessColumns(accessUserIds, setAccessUserIds)} />}
+    </Modal>
+  </div>;
 }

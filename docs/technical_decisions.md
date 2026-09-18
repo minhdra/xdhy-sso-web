@@ -45,6 +45,11 @@ sự...) — mỗi trang gọi API 1-2 lần lúc mount, không đáng để man
 `loader/`. Đánh đổi: không có cơ chế refetch/invalidate tự động — mỗi panel tự `useState` + `useEffect`
 + hàm `load()` gọi lại tay sau khi mutate (xem `SessionsPanel.tsx`, `AppsAdminPanel.tsx`).
 
+Riêng `AppsAdminPanel`, danh sách user không tải lúc panel mount mà chỉ tải khi mở modal quyền. Modal
+luôn dùng một danh sách checkbox đầy đủ; grant hiện tại được checked, còn “Chỉ người chưa được phân
+quyền” là bộ lọc client-side. Khi lưu, frontend so sánh tập ban đầu/tập mới rồi gọi API cộng/gỡ theo
+delta, sau đó refetch count ứng dụng.
+
 ## Đồng bộ theme sáng/tối với `build-web`: cookie + localStorage
 
 **Chọn:** `theme.ts` đọc/ghi theo thứ tự ưu tiên — cookie domain cha (`xdhy_theme_mode`, ghi mới) →
