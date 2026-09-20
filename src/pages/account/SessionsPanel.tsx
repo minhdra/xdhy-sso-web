@@ -5,8 +5,18 @@ import { useEffect, useState } from 'react';
 import { getSessions, revokeSessionRequest, type SsoSession } from '../../api';
 
 // Parse gọn user-agent -> "Chrome · macOS" (không cần thư viện).
+// Không phân biệt được iPad bật "Desktop site" (UA giống hệt Mac) - hiện "macOS".
 function describeAgent(ua: string | null): string {
   if (!ua) return 'Không rõ thiết bị';
+
+  // Client không phải trình duyệt (app di động, công cụ gọi API): UA không có
+  // token OS/trình duyệt nên tách ra trước, không rơi vào "Trình duyệt khác".
+  if (/^Dart\//.test(ua)) return 'Ứng dụng di động (Dart)';
+  if (/^(bruno-runtime|PostmanRuntime|insomnia)\b/i.test(ua)) return 'Công cụ API';
+  if (/^(okhttp|python-requests|python-urllib|axios|node-fetch|undici|Go-http-client|Apache-HttpClient|Java)\b/i.test(ua)) {
+    return 'Ứng dụng/script gọi API';
+  }
+  if (/^(curl|Wget)\//i.test(ua)) return ua.split('/')[0].toLowerCase();
 
   // OS: iOS PHẢI check trước macOS - mọi UA iOS đều chứa "like Mac OS X".
   const os =
@@ -25,15 +35,20 @@ function describeAgent(ua: string | null): string {
     : /FBAN|FBAV|FB_IAB/.test(ua) ? 'Facebook'
     : /Instagram/i.test(ua) ? 'Instagram'
     : /\bLine\//i.test(ua) ? 'LINE'
-    : /Code\/[\d.]+ /.test(ua) ? 'VS Code'
+    : /TikTok|musical_ly|BytedanceWebview/i.test(ua) ? 'TikTok'
+    : /Viber/i.test(ua) ? 'Viber'
+    : /\bCode\/[\d.]+ /.test(ua) ? 'VS Code'
     : /Electron\//.test(ua) ? 'Ứng dụng desktop'
     : /Edg(A|iOS)?\//.test(ua) ? 'Edge'
     : /OPR\/|OPiOS\//.test(ua) ? 'Opera'
     : /SamsungBrowser\//.test(ua) ? 'Samsung Internet'
+    : /coc_coc_browser\//.test(ua) ? 'Cốc Cốc'
+    : /Vivaldi\//.test(ua) ? 'Vivaldi'
     : /Firefox\/|FxiOS\//.test(ua) ? 'Firefox'
     : /CriOS\/|Chrome\//.test(ua) ? 'Chrome'
-    : /curl\//.test(ua) ? 'curl'
     : /Version\/[\d.]+.*Safari\/|Safari\//.test(ua) ? 'Safari'
+    // WKWebView của app khác: có "Mobile/<build>" nhưng không có "Safari/".
+    : os === 'iOS' && /Mobile\//.test(ua) ? 'Ứng dụng trong app'
     : 'Trình duyệt khác';
 
   return os ? `${browser} · ${os}` : browser;

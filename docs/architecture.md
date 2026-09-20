@@ -119,7 +119,7 @@ lại sau khi đã lưu dữ liệu; không ép reload giữa thao tác.
 | --- | --- | --- |
 | Thông tin cá nhân | `ProfilePanel` | Sửa họ tên/email/sđt/giới tính/ngày sinh, đổi avatar (upload thật, không phải URL). Hiển thị thêm (chỉ đọc): tài khoản/chức vụ/phòng ban/chi nhánh |
 | Mật khẩu | `PasswordPanel` | Đổi mật khẩu (mật khẩu cũ + mới + xác nhận) |
-| Phiên đăng nhập | `SessionsPanel` | Liệt kê thiết bị đang đăng nhập (gộp theo trình duyệt+hệ điều hành đoán từ User-Agent), thu hồi từng phiên (trừ phiên hiện tại) |
+| Phiên đăng nhập | `SessionsPanel` | Liệt kê thiết bị đang đăng nhập (gộp theo trình duyệt+hệ điều hành đoán từ User-Agent bằng `describeAgent`, không dùng thư viện), thu hồi từng phiên (trừ phiên hiện tại). `describeAgent` tách client không phải trình duyệt trước (app Dart, Postman/Bruno, okhttp/curl...), rồi webview in-app (Zalo/Facebook/Instagram/LINE/TikTok/Viber), rồi trình duyệt (kiểm tra iOS trước macOS vì UA iOS chứa "like Mac OS X"). **Giới hạn UA không giải quyết được:** iPad bật "Desktop site" gửi UA giống hệt Mac nên hiện "macOS". Thêm client/trình duyệt mới thì đối chiếu `SELECT user_agent, count(*) FROM a_session GROUP BY 1` xem còn rơi vào "Trình duyệt khác" không |
 | Quản lý ứng dụng | `AppsAdminPanel` | **Chỉ admin** — CRUD app; bảng hiển thị grant trực tiếp/tổng user; modal tải danh sách user khi mở, checkbox phản ánh quyền hiện tại và bộ lọc “Chỉ người chưa được phân quyền” chỉ ẩn các dòng đã chọn. Khi lưu, frontend tính delta thêm/gỡ. BE tự chặn 403 nếu gọi thẳng API, ẩn tab chỉ là UX |
 
 Tab admin ẩn ở FE **không phải lớp bảo vệ duy nhất** — `api-sso` có `requireAdmin` riêng, xem
