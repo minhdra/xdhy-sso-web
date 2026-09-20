@@ -5,15 +5,18 @@ import {
   LockOutlined,
 } from '@ant-design/icons';
 import { App as AntdApp } from 'antd';
+import { lazy, Suspense } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import AppHeader from '../components/AppHeader';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useSessionStore } from '../store/session';
-import AppsAdminPanel from './account/AppsAdminPanel';
-import PasswordPanel from './account/PasswordPanel';
-import ProfilePanel from './account/ProfilePanel';
-import SessionsPanel from './account/SessionsPanel';
+const ProfilePanel = lazy(() => import('./account/ProfilePanel'));
+const PasswordPanel = lazy(() => import('./account/PasswordPanel'));
+const SessionsPanel = lazy(() => import('./account/SessionsPanel'));
+const AppsAdminPanel = lazy(() => import('./account/AppsAdminPanel'));
+
+const PanelLoading = () => <div className="ssoRouteLoading" role="status" aria-label="Đang tải" />;
 
 const BASE_TABS = [
   { key: 'profile', label: 'Thông tin cá nhân', icon: <IdcardOutlined />, color: '#2563a6' },
@@ -64,10 +67,12 @@ export default function AccountPage() {
           </nav>
 
           <section className="ssoAccount-panel">
-            {tab === 'profile' && <ProfilePanel />}
-            {tab === 'password' && <PasswordPanel />}
-            {tab === 'sessions' && <SessionsPanel />}
-            {tab === 'apps-admin' && isAdmin && <AppsAdminPanel />}
+            <Suspense fallback={<PanelLoading />}>
+              {tab === 'profile' && <ProfilePanel />}
+              {tab === 'password' && <PasswordPanel />}
+              {tab === 'sessions' && <SessionsPanel />}
+              {tab === 'apps-admin' && isAdmin && <AppsAdminPanel />}
+            </Suspense>
           </section>
         </div>
       </main>

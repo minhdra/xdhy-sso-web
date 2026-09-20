@@ -90,3 +90,11 @@ import từ `build-web`. **Vì sao:** 2 repo là 2 unit deploy độc lập, kh�
 tooling (`pnpm workspace` không được thiết lập giữa các service) — copy trực tiếp đơn giản hơn dựng hạ
 tầng chia sẻ code cho vài dòng rule. Đánh đổi: sửa message lỗi ở 1 nơi phải nhớ sửa ở nơi kia nếu muốn
 giữ nhất quán UX.
+
+## Lazy-load route và panel tài khoản (20/09/2026)
+
+**Chọn:** `LoginPage`, `ResetPasswordPage`, `HomePage` và `AccountPage` được tải theo route; bốn panel
+trong Account chỉ tải khi người dùng mở tab tương ứng. **Vì sao:** trước đây một bundle khởi đầu chứa cả
+login, animation, danh sách phiên và bảng quản trị ứng dụng, làm trang đầu tải/phân tích JavaScript chậm
+không cần thiết. Theme shell và kiểm tra phiên vẫn ở bundle đầu để không thay đổi luồng đăng nhập; màn
+cần thiết hiện fallback tối giản trong lúc chunk tải.

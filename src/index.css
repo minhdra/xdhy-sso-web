@@ -1268,3 +1268,7 @@ textarea::placeholder,
 body {
   font-size: var(--app-font-size);
 }
+
+.ssoRouteLoading {
+  min-height: 120px;
+}
