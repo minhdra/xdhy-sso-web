@@ -35,6 +35,24 @@ export default defineConfig(({ mode }) => {
       __APP_BUILD_INFO__: JSON.stringify(buildInfo),
     },
     plugins: [react(), versionAsset(buildInfo)],
+    build: {
+      // antd + icons một mình đã hơn 500KB - sàn của UI kit, không phải
+      // regression (đồng bộ với build-web/task-web, xem vite.config.ts 2
+      // app đó). Nâng ngưỡng cảnh báo để chỉ báo bloat thật.
+      chunkSizeWarningLimit: 1600,
+      rollupOptions: {
+        output: {
+          // Tách vendor ít đổi khỏi app code để browser cache qua các lần
+          // deploy - trước đây gộp hết vào 1 chunk 800KB+, đổi 1 dòng code
+          // app là toàn bộ vendor phải tải lại.
+          manualChunks: {
+            "vendor-react": ["react", "react-dom", "react-router-dom"],
+            "vendor-antd": ["antd", "@ant-design/icons"],
+            "vendor-utils": ["dayjs", "zustand"],
+          },
+        },
+      },
+    },
     server: {
       port: 5173,
       proxy: {
