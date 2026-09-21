@@ -54,9 +54,9 @@ Người truy cập
 
 Quy ước:
 
-- Tử số `direct_access_count`: số user active đang được cấp trực tiếp trong `a_app_access`.
-- Mẫu số `eligible_user_count`: tổng user đủ điều kiện cấp quyền, dùng cùng điều kiện active với danh sách quản trị user.
-- Admin có quyền mặc định nhưng không bị cộng vào `direct_access_count` nếu không có dòng cấp trực tiếp.
+- Tử số `direct_access_count`: số user active **không phải admin** đang được cấp trực tiếp trong `a_app_access` (migration 0014 loại admin — migration 0007 từng seed cả admin vào `a_app_access`, nếu đếm sẽ vượt mẫu số).
+- Mẫu số `eligible_user_count`: tổng user active **không phải admin** đủ điều kiện cấp quyền, cùng điều kiện với danh sách `GET /admin/users` (cũng loại admin từ 0014). Tử/mẫu cùng loại admin nên tỉ lệ luôn ≤ 100%.
+- Admin có quyền mặc định, không nằm trong tử số lẫn mẫu số; chỉ `effective_access_count` (admin + được cấp trực tiếp) mới tính admin.
 - Tooltip/chú thích: “12 người được cấp trực tiếp. Quản trị viên hệ thống luôn có quyền truy cập.”
 
 Không gọi tử số là “tổng người có quyền” vì như vậy sẽ sai khi có admin bypass. Nếu sản phẩm cần số người **thực sự có quyền hiệu lực**, API có thể trả thêm `effective_access_count`, nhưng không dùng nó để quản lý các dòng cấp trực tiếp.
