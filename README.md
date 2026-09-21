@@ -70,6 +70,18 @@ Không có `docker-compose.yml` riêng cho service này — chạy cùng cụm �
 docker compose -f ../docker-compose.real.yml up -d --build sso-web
 ```
 
+## Deploy (Windows / IIS host, GitLab CI)
+
+`dist/` **được commit vào repo** (không còn trong `.gitignore`), CI không build và server **không cần Node/npm**:
+
+1. Dev: `pnpm build` → `git add dist` → commit → push nhánh `dev`. **Quên build = deploy bản cũ.**
+   Biến `VITE_*` trong `.env` được nướng vào `dist` lúc build - đổi `.env` phải build lại.
+2. GitLab runner (Windows, tag `dev`) chạy job `deploy-server` trong [`.gitlab-ci.yml`](./.gitlab-ci.yml):
+   `robocopy /MIR` thư mục `dist/` vào `C:\inetpub\wwwroot\XayDung\sso-web` (xoá file cũ không còn trong dist).
+3. IIS tự phục vụ file tĩnh, không có process nào để kill/chạy lại.
+
+`web.config` của site (SPA fallback + proxy `/api`) phải có sẵn ở thư mục đích; job giữ nguyên, không ghi đè.
+
 ## Tài liệu dự án
 
 - [`docs/architecture.md`](./docs/architecture.md) — Kiến trúc, vị trí trong hệ thống, cấu trúc `src/`

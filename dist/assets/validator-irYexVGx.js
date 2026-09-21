@@ -1,0 +1,1 @@
+const e={required:[{required:!0,transform:t=>typeof t=="string"?t.trim():t,message:"Không thể để trống"}],email:[{pattern:/^[\w.-]+@[\w-]+(\.[\w-]+)+$/,message:"Email không đúng định dạng"}],phone:[{pattern:/^0\d{9,10}$/,message:"Số điện thoại không hợp lệ"}],passwordMin:[{min:6,message:"Mật khẩu phải có ít nhất 6 ký tự"}]};export{e as R};

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Dùng chung bộ icon với build-web (cùng thương hiệu XDHY, xem
+    build-web/index.html) - chưa từng có favicon riêng cho sso-web trước đây. -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+
+    <title>Tài khoản — An Trường Phát Hưng Yên</title>
+    <meta
+      name="description"
+      content="Cổng đăng nhập một lần (SSO) của An Trường Phát Hưng Yên — đăng nhập một lần, dùng chung cho mọi ứng dụng nội bộ: công trình, công việc, tài chính."
+    />
+    <meta name="application-name" content="XDHY SSO" />
+    <meta name="author" content="An Trường Phát Hưng Yên" />
+    <meta name="theme-color" content="#2563a6" />
+    <!-- Cổng đăng nhập nội bộ - KHÔNG cho search engine lập chỉ mục. -->
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="format-detection" content="telephone=no" />
+    <!-- Trang chủ SSO = https://xdhy.vn (task-web ở congtrinh.xdhy.vn...). -->
+    <link rel="canonical" href="https://xdhy.vn/" />
+
+    <!-- Open Graph (Facebook/Zalo/khi dán link) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="An Trường Phát Hưng Yên" />
+    <meta property="og:title" content="Đăng nhập — An Trường Phát Hưng Yên" />
+    <meta
+      property="og:description"
+      content="Cổng đăng nhập một lần (SSO) cho hệ thống nội bộ An Trường Phát Hưng Yên."
+    />
+    <meta property="og:url" content="https://xdhy.vn/" />
+    <!-- Tạm dùng logo.png. Nên thêm public/og-image.png (1200x630) cho ảnh
+         preview đẹp khi dán link, rồi đổi og:image + twitter:image sang
+         /og-image.png và thêm og:image:width=1200 / og:image:height=630. -->
+    <meta property="og:image" content="https://xdhy.vn/logo.png" />
+    <meta property="og:image:alt" content="An Trường Phát Hưng Yên — Cổng đăng nhập" />
+    <meta property="og:locale" content="vi_VN" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Đăng nhập — An Trường Phát Hưng Yên" />
+    <meta
+      name="twitter:description"
+      content="Cổng đăng nhập một lần (SSO) cho hệ thống nội bộ An Trường Phát Hưng Yên."
+    />
+    <meta name="twitter:image" content="https://xdhy.vn/logo.png" />
+    <script>
+      // OrbStack phục vụ cả HTTP và HTTPS, nhưng SSO dùng cookie Secure và
+      // gateway chỉ cho phép origin HTTPS. Chuyển scheme trước khi React gửi
+      // request đầu tiên để Safari không chặn preflight vì lệch origin.
+      if (location.protocol === 'http:' && location.hostname.endsWith('.orb.local')) {
+        location.replace(`https://${location.host}${location.pathname}${location.search}${location.hash}`);
+      }
+    </script>
+    <script type="module" crossorigin src="/assets/index-D113TBYb.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/vendor-react-Bp4ILrXF.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-antd-D7BlO1UP.js">
+    <link rel="modulepreload" crossorigin href="/assets/vendor-utils-DSIWxjnI.js">
+    <link rel="stylesheet" crossorigin href="/assets/index-CfW9MCLx.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
