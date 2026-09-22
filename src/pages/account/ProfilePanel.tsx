@@ -21,6 +21,7 @@ import {
 } from '../../api';
 import { useSessionStore } from '../../store/session';
 import { RULES_FORM } from '../../validator';
+import { resizeImage } from '../../imageResize';
 
 interface FormValues {
   full_name: string;
@@ -120,7 +121,10 @@ export default function ProfilePanel() {
     }
     setUploading(true);
     try {
-      const res = await uploadAvatarRequest(file);
+      const resized = await resizeImage(file, 400, 'cover', 'image/webp');
+      const isWebp = resized.type === 'image/webp';
+      const uploadFile = new File([resized], isWebp ? 'avatar.webp' : 'avatar.png', { type: resized.type });
+      const res = await uploadAvatarRequest(uploadFile);
       if (!res.ok) {
         notification.error({
           message: res.data.message || 'Tải ảnh thất bại.',
@@ -168,7 +172,7 @@ export default function ProfilePanel() {
                 Đổi ảnh đại diện
               </Button>
             </Upload>
-            <p className='ssoPanel-hint'>JPG, PNG, GIF, WEBP · tối đa 5MB</p>
+            <p className='ssoPanel-hint'>JPG, PNG, GIF, WEBP · tối đa 5MB · tự thu về 400 × 400 px</p>
           </div>
         </div>
         <div className='ssoProfile-other'>

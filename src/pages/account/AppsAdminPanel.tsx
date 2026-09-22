@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { addAppAccessRequest, avatarSrc, deleteAppRequest, getAdminApps, getAdminUsers, getAppAccessRequest, removeAppAccessRequest, uploadAppIconRequest, upsertAppRequest, type AdminApp, type AdminUser } from '../../api';
 import { RULES_FORM } from '../../validator';
+import { resizeImage } from '../../imageResize';
 
 interface AppFormValues { app_id?: string | null; app_key: string; app_name: string; description?: string; url?: string; color?: string; sort_order?: number }
 type AccessRow<T extends AdminUser> = { kind: 'position'; key: string; position_name: string; users: T[] } | { kind: 'user'; key: string; user: T };
@@ -97,24 +98,16 @@ export default function AppsAdminPanel() {
       const res = await upsertAppRequest(values);
       if (!res.ok) { notification.error({ message: res.data.message || 'Không lưu được ứng dụng.' }); return; }
       if (iconFile) {
-        const image = await createImageBitmap(iconFile);
-        try {
-          const canvas = document.createElement('canvas');
-          canvas.width = 46; canvas.height = 46;
-          const context = canvas.getContext('2d');
-          if (!context) throw new Error('Không thể xử lý ảnh.');
-          const scale = Math.min(46 / image.width, 46 / image.height);
-          const width = image.width * scale; const height = image.height * scale;
-          context.drawImage(image, (46 - width) / 2, (46 - height) / 2, width, height);
-          const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error('Không thể xử lý ảnh.')), 'image/png'));
-          if (blob.size > 1024 * 1024) throw new Error('Icon sau khi xử lý vượt quá 1MB.');
-          const uploaded = await uploadAppIconRequest(res.data.app_id, blob);
-          if (!uploaded.ok) throw new Error(uploaded.data.message || 'Không tải được icon.');
-        } finally { image.close(); }
+        const blob = await resizeImage(iconFile, 138, 'contain', 'image/png');
+        if (blob.size > 1024 * 1024) throw new Error('Icon sau khi xử lý vượt quá 1MB.');
+        const uploaded = await uploadAppIconRequest(res.data.app_id, blob);
+        if (!uploaded.ok) throw new Error(uploaded.data.message || 'Không tải được icon.');
+        setApps((current) => current?.map((app) => app.app_id === res.data.app_id
+          ? { ...app, icon: uploaded.data.icon } : app) ?? null);
       }
+      await loadApps();
       notification.success({ message: 'Đã lưu ứng dụng.' });
       setAppModalOpen(false);
-      void loadApps();
     } catch (error) { notification.error({ message: error instanceof Error ? error.message : 'Không thể kết nối tới máy chủ.' }); void loadApps(); }
     finally { setSavingApp(false); }
   };
@@ -219,7 +212,7 @@ export default function AppsAdminPanel() {
               setIconFile(file); setIconPreview(URL.createObjectURL(file)); return false;
             }}><Button icon={<UploadOutlined />}>Chọn ảnh</Button></Upload>
           </Space>
-          <div className="ssoPanel-hint">Tối đa 1MB · tự thu về 46 × 46 px</div>
+          <div className="ssoPanel-hint">Tối đa 1MB · tối ưu 138 × 138 px, hiển thị sắc nét ở 46 px</div>
         </Form.Item>
         <Form.Item name="sort_order" label="Thứ tự hiển thị"><InputNumber min={0} className="ssoAppsAdmin-fullWidth" /></Form.Item>
       </Form>

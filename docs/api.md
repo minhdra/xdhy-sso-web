@@ -19,16 +19,16 @@ của `api-sso` (`GET /api/docs/api-sso/` qua gateway) — xem
 | `forgotPasswordRequest` | `POST /forgot-password` | `pages/LoginPage.tsx` (view "Quên mật khẩu") |
 | `resetPasswordConfirmRequest` | `POST /reset-password-confirm` | `pages/ResetPasswordPage.tsx` |
 | `getMe` | `GET /me` | `store/session.ts` (`fetchMe`) |
-| `getProfile` | `GET /account/profile` | `pages/account/ProfilePanel.tsx` |
-| `updateProfileRequest` | `PUT /account/profile` | `pages/account/ProfilePanel.tsx` |
-| `uploadAvatarRequest` | `POST /account/avatar` (multipart, field `file`) | `pages/account/ProfilePanel.tsx` |
+| `getProfile` | `GET /account/profile` | `pages/account/ProfilePanel.tsx` (cắt vuông 400 × 400, ưu tiên WebP trước khi upload) |
+| `updateProfileRequest` | `PUT /account/profile` | `pages/account/ProfilePanel.tsx` (cắt vuông 400 × 400, ưu tiên WebP trước khi upload) |
+| `uploadAvatarRequest` | `POST /account/avatar` (multipart, field `file`) | `pages/account/ProfilePanel.tsx` (cắt vuông 400 × 400, ưu tiên WebP trước khi upload) |
 | `changePasswordRequest` | `POST /account/change-password` | `pages/account/PasswordPanel.tsx` |
 | `getSessions` | `GET /account/sessions` | `pages/account/SessionsPanel.tsx` |
 | `revokeSessionRequest` | `POST /account/sessions/revoke` | `pages/account/SessionsPanel.tsx` |
 | `getApps` | `GET /apps` | `pages/HomePage.tsx` |
 | `getAdminApps` | `GET /admin/apps` | `pages/account/AppsAdminPanel.tsx` |
 | `upsertAppRequest` | `POST /admin/apps` | `pages/account/AppsAdminPanel.tsx` (modal Thêm/Sửa) |
-| `uploadAppIconRequest` | `POST /admin/apps/{app_id}/icon` | Upload ảnh PNG 46 × 46 sau khi lưu app; ảnh nguồn tối đa 1MB, đường dẫn ghi vào `a_app.icon` |
+| `uploadAppIconRequest` | `POST /admin/apps/{app_id}/icon` | Upload ảnh PNG 138 × 138 để hiển thị ở 46 px sau khi lưu app; ảnh nguồn tối đa 1MB, mỗi lần upload có URL mới và đường dẫn ghi vào `a_app.icon` |
 | `deleteAppRequest` | `POST /admin/apps/delete` | `pages/account/AppsAdminPanel.tsx` |
 | `getAppAccessRequest` | `GET /admin/apps/{app_id}/access` | Danh sách người đang được cấp trực tiếp |
 | `getAdminUsers` | `GET /admin/users` | Tải khi mở modal quyền để dựng một danh sách checkbox đầy đủ |
