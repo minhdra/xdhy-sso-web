@@ -172,7 +172,7 @@ export default function ProfilePanel() {
                 Đổi ảnh đại diện
               </Button>
             </Upload>
-            <p className='ssoPanel-hint'>JPG, PNG, GIF, WEBP · tối đa 5MB · tự thu về 400 × 400 px</p>
+            <p className='ssoPanel-hint'>JPG, PNG, GIF, WEBP · tối đa 5MB</p>
           </div>
         </div>
         <div className='ssoProfile-other'>

@@ -212,7 +212,7 @@ export default function AppsAdminPanel() {
               setIconFile(file); setIconPreview(URL.createObjectURL(file)); return false;
             }}><Button icon={<UploadOutlined />}>Chọn ảnh</Button></Upload>
           </Space>
-          <div className="ssoPanel-hint">Tối đa 1MB · tối ưu 138 × 138 px, hiển thị sắc nét ở 46 px</div>
+          <div className="ssoPanel-hint">Ảnh tối đa 1MB</div>
         </Form.Item>
         <Form.Item name="sort_order" label="Thứ tự hiển thị"><InputNumber min={0} className="ssoAppsAdmin-fullWidth" /></Form.Item>
       </Form>
