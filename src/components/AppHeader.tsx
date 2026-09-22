@@ -3,12 +3,12 @@ import {
   MoonOutlined,
   SettingOutlined,
   SunOutlined,
-  UserOutlined,
 } from "@ant-design/icons";
 import { Avatar, Dropdown, Switch, Tooltip } from "antd";
 import { useNavigate } from "react-router-dom";
 
 import { avatarSrc, logoutRequest } from "../api";
+import { avatarColor } from "../avatarColor";
 import { useSessionStore } from "../store/session";
 import { useThemeStore } from "../store/theme";
 
@@ -95,10 +95,9 @@ export default function AppHeader() {
               <Avatar
                 size={34}
                 src={avatarSrc(user?.avatar)}
-                icon={<UserOutlined />}
-                style={{ backgroundColor: "#2563a6", flex: "none" }}
+                style={{ backgroundColor: avatarColor(user?.user_id ?? ''), color: "#fff", flex: "none" }}
               >
-                {user?.full_name?.trim()?.charAt(0)?.toUpperCase()}
+                {(user?.full_name || user?.user_name || '?').trim().charAt(0).toUpperCase()}
               </Avatar>
               <span className="ssoHeader-userText">
                 <span className="ssoHeader-userName">{user?.full_name}</span>

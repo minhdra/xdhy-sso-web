@@ -1,4 +1,4 @@
-import { UploadOutlined, UserOutlined } from '@ant-design/icons';
+import { UploadOutlined } from '@ant-design/icons';
 import {
   App as AntdApp,
   Avatar,
@@ -22,6 +22,7 @@ import {
 import { useSessionStore } from '../../store/session';
 import { RULES_FORM } from '../../validator';
 import { resizeImage } from '../../imageResize';
+import { avatarColor } from '../../avatarColor';
 
 interface FormValues {
   full_name: string;
@@ -154,10 +155,9 @@ export default function ProfilePanel() {
           <Avatar
             size={76}
             src={avatarSrc(profile?.avatar)}
-            icon={<UserOutlined />}
-            style={{ background: '#2563a6', flex: 'none' }}
+            style={{ background: avatarColor(profile?.user_id ?? ''), color: '#fff', flex: 'none' }}
           >
-            {fullName.trim().charAt(0).toUpperCase()}
+            {(fullName || profile?.user_name || '?').trim().charAt(0).toUpperCase()}
           </Avatar>
           <div>
             <Upload

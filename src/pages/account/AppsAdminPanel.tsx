@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { addAppAccessRequest, avatarSrc, deleteAppRequest, getAdminApps, getAdminUsers, getAppAccessRequest, removeAppAccessRequest, uploadAppIconRequest, upsertAppRequest, type AdminApp, type AdminUser } from '../../api';
 import { RULES_FORM } from '../../validator';
 import { resizeImage } from '../../imageResize';
+import { avatarColor } from '../../avatarColor';
 
 interface AppFormValues { app_id?: string | null; app_key: string; app_name: string; description?: string; url?: string; color?: string; sort_order?: number }
 type AccessRow<T extends AdminUser> = { kind: 'position'; key: string; position_name: string; users: T[] } | { kind: 'user'; key: string; user: T };
@@ -22,15 +23,9 @@ const buildAccessRows = <T extends AdminUser>(users: T[]): AccessRow<T>[] => {
   ]);
 };
 
-const avatarColor = (id: string): string => {
-  let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0;
-  return `hsl(${hash % 360}, 45%, 42%)`;
-};
-
 const UserIdentity = ({ user }: { user: AdminUser }) => (
   <Space size={10}>
-    <Avatar shape="square" size={30} src={avatarSrc(user.avatar)} style={{ background: avatarColor(user.user_id), flex: 'none' }}>
+    <Avatar shape="square" size={30} src={avatarSrc(user.avatar)} style={{ background: avatarColor(user.user_id), color: '#fff', flex: 'none' }}>
       {user.full_name.trim().charAt(0).toUpperCase()}
     </Avatar>
     <div className="ssoAccess-userIdentity"><span>{user.full_name}</span><small>@{user.user_name}</small></div>
