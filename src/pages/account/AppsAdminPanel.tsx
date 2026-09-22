@@ -1,8 +1,8 @@
-import { DeleteOutlined, EditOutlined, PlusOutlined, TeamOutlined } from '@ant-design/icons';
-import { Alert, App as AntdApp, Avatar, Button, Checkbox, Empty, Form, Input, InputNumber, Modal, Popconfirm, Skeleton, Space, Table, Tag, Tooltip, Typography } from 'antd';
+import { DeleteOutlined, EditOutlined, PlusOutlined, TeamOutlined, UploadOutlined } from '@ant-design/icons';
+import { Alert, App as AntdApp, Avatar, Button, Checkbox, Empty, Form, Input, InputNumber, Modal, Popconfirm, Skeleton, Space, Table, Tag, Tooltip, Typography, Upload } from 'antd';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { addAppAccessRequest, avatarSrc, deleteAppRequest, getAdminApps, getAdminUsers, getAppAccessRequest, removeAppAccessRequest, upsertAppRequest, type AdminApp, type AdminUser } from '../../api';
+import { addAppAccessRequest, avatarSrc, deleteAppRequest, getAdminApps, getAdminUsers, getAppAccessRequest, removeAppAccessRequest, uploadAppIconRequest, upsertAppRequest, type AdminApp, type AdminUser } from '../../api';
 import { RULES_FORM } from '../../validator';
 
 interface AppFormValues { app_id?: string | null; app_key: string; app_name: string; description?: string; url?: string; color?: string; sort_order?: number }
@@ -43,6 +43,8 @@ export default function AppsAdminPanel() {
   const [appModalOpen, setAppModalOpen] = useState(false);
   const [appForm] = Form.useForm<AppFormValues>();
   const [savingApp, setSavingApp] = useState(false);
+  const [iconFile, setIconFile] = useState<File | null>(null);
+  const [iconPreview, setIconPreview] = useState<string | null>(null);
   const [accessApp, setAccessApp] = useState<AdminApp | null>(null);
   const [accessUsers, setAccessUsers] = useState<AdminUser[] | null>(null);
   const [accessError, setAccessError] = useState(false);
@@ -83,20 +85,37 @@ export default function AppsAdminPanel() {
 
   const openCreate = () => {
     appForm.resetFields();
-    appForm.setFieldsValue({ color: '#2563a6', sort_order: (apps?.length ?? 0) + 1 });
+    appForm.setFieldsValue({ sort_order: (apps?.length ?? 0) + 1 });
+    setIconFile(null); setIconPreview(null);
     setAppModalOpen(true);
   };
-  const openEdit = (app: AdminApp) => { appForm.setFieldsValue({ ...app, description: app.description ?? '' }); setAppModalOpen(true); };
+  const openEdit = (app: AdminApp) => { setIconFile(null); setIconPreview(avatarSrc(app.icon) ?? null); appForm.setFieldsValue({ ...app, description: app.description ?? '' }); setAppModalOpen(true); };
 
   const handleSaveApp = async (values: AppFormValues) => {
     setSavingApp(true);
     try {
       const res = await upsertAppRequest(values);
       if (!res.ok) { notification.error({ message: res.data.message || 'Không lưu được ứng dụng.' }); return; }
+      if (iconFile) {
+        const image = await createImageBitmap(iconFile);
+        try {
+          const canvas = document.createElement('canvas');
+          canvas.width = 46; canvas.height = 46;
+          const context = canvas.getContext('2d');
+          if (!context) throw new Error('Không thể xử lý ảnh.');
+          const scale = Math.min(46 / image.width, 46 / image.height);
+          const width = image.width * scale; const height = image.height * scale;
+          context.drawImage(image, (46 - width) / 2, (46 - height) / 2, width, height);
+          const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob((value) => value ? resolve(value) : reject(new Error('Không thể xử lý ảnh.')), 'image/png'));
+          if (blob.size > 1024 * 1024) throw new Error('Icon sau khi xử lý vượt quá 1MB.');
+          const uploaded = await uploadAppIconRequest(res.data.app_id, blob);
+          if (!uploaded.ok) throw new Error(uploaded.data.message || 'Không tải được icon.');
+        } finally { image.close(); }
+      }
       notification.success({ message: 'Đã lưu ứng dụng.' });
       setAppModalOpen(false);
       void loadApps();
-    } catch { notification.error({ message: 'Không thể kết nối tới máy chủ.' }); }
+    } catch (error) { notification.error({ message: error instanceof Error ? error.message : 'Không thể kết nối tới máy chủ.' }); void loadApps(); }
     finally { setSavingApp(false); }
   };
 
@@ -177,7 +196,7 @@ export default function AppsAdminPanel() {
     <div className="ssoPanel-headRow"><div><h2>Quản lý ứng dụng</h2><p className="ssoPanel-hint">Cấu hình ứng dụng và những người được cấp quyền truy cập trực tiếp.</p></div><Button type="primary" icon={<PlusOutlined />} onClick={openCreate}>Thêm ứng dụng</Button></div>
     {appsError && <Alert className="ssoAppsAdmin-alert" type="error" showIcon message="Không tải được danh sách ứng dụng" action={<Button size="small" onClick={() => void loadApps()}>Thử lại</Button>} />}
     {apps === null ? <Skeleton className="ssoAppsAdmin-table" active title={false} paragraph={{ rows: 6 }} /> : <Table<AdminApp> className="ssoAppsAdmin-table" rowKey="app_id" dataSource={apps} pagination={false} locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có ứng dụng" /> }} columns={[
-      { title: 'Ứng dụng', dataIndex: 'app_name', render: (_, app) => <div className="ssoAppsAdmin-appIdentity"><span className="ssoAppsAdmin-appMark" style={{ background: app.color }}>{app.app_name.trim().charAt(0).toUpperCase()}</span><div><strong>{app.app_name}</strong><small>{app.app_key}</small></div></div> },
+      { title: 'Ứng dụng', dataIndex: 'app_name', render: (_, app) => <div className="ssoAppsAdmin-appIdentity"><span className="ssoAppsAdmin-appMark" style={{ background: app.icon ? 'transparent' : app.color }}>{app.icon ? <img src={avatarSrc(app.icon)} alt="" width={34} height={34} /> : app.app_name.trim().charAt(0).toUpperCase()}</span><div><strong>{app.app_name}</strong><small>{app.app_key}</small></div></div> },
       { title: 'URL', dataIndex: 'url', responsive: ['md'], render: (url: string) => url ? <span className="ssoAppsAdmin-url">{url}</span> : <Tag color="warning">Chưa cấu hình URL</Tag> },
       { title: 'Người truy cập', dataIndex: 'direct_access_count', width: 190, render: (_: number, app) => <Tooltip title={`${app.direct_access_count} người được cấp trực tiếp. Quản trị viên hệ thống luôn có quyền truy cập.`}><Button className="ssoAppsAdmin-accessCount" type="text" icon={<TeamOutlined />} onClick={() => openAccess(app)}><span>{app.direct_access_count} / {app.eligible_user_count}</span> người</Button></Tooltip> },
       { title: '', key: 'actions', width: 96, render: (_, app) => <Space size={2}><Button type="text" icon={<EditOutlined />} onClick={() => openEdit(app)} aria-label={`Sửa ${app.app_name}`} /><Popconfirm title="Xoá ứng dụng này?" description="Toàn bộ quyền đã cấp cũng bị xoá." okText="Xoá" cancelText="Huỷ" okButtonProps={{ danger: true }} onConfirm={() => handleDelete(app)}><Button type="text" danger icon={<DeleteOutlined />} aria-label={`Xoá ${app.app_name}`} /></Popconfirm></Space> },
@@ -190,7 +209,18 @@ export default function AppsAdminPanel() {
         <Form.Item name="app_name" label="Tên hiển thị" rules={RULES_FORM.required}><Input placeholder="vd: Trò chuyện" /></Form.Item>
         <Form.Item name="description" label="Mô tả ngắn"><Input placeholder="Hiện dưới tên ở trang chủ" /></Form.Item>
         <Form.Item name="url" label="URL" rules={[{ type: 'url', message: 'URL không hợp lệ' }]}><Input placeholder="https://..." /></Form.Item>
-        <Form.Item name="color" label="Màu icon"><Input type="color" className="ssoAppsAdmin-colorInput" /></Form.Item>
+        <Form.Item label="Ảnh icon">
+          <Space>
+            {iconPreview && <img src={iconPreview} alt="Icon đã chọn" width={46} height={46} style={{ objectFit: 'contain' }} />}
+            <Upload accept="image/*" showUploadList={false} beforeUpload={(file) => {
+              if (!file.type.startsWith('image/') || file.size > 1024 * 1024) {
+                notification.error({ message: 'Chọn ảnh tối đa 1MB.' }); return false;
+              }
+              setIconFile(file); setIconPreview(URL.createObjectURL(file)); return false;
+            }}><Button icon={<UploadOutlined />}>Chọn ảnh</Button></Upload>
+          </Space>
+          <div className="ssoPanel-hint">Tối đa 1MB · tự thu về 46 × 46 px</div>
+        </Form.Item>
         <Form.Item name="sort_order" label="Thứ tự hiển thị"><InputNumber min={0} className="ssoAppsAdmin-fullWidth" /></Form.Item>
       </Form>
     </Modal>

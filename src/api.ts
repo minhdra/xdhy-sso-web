@@ -160,6 +160,7 @@ export interface SsoApp {
   description: string | null;
   url: string;
   color: string;
+  icon: string | null;
 }
 export const getApps = () => get<SsoApp[]>('apps');
 
@@ -183,6 +184,15 @@ export interface UpsertAppPayload {
 }
 export const upsertAppRequest = (payload: UpsertAppPayload) =>
   post<{ success: boolean; message: string; app_id: string }>('admin/apps', payload);
+
+export async function uploadAppIconRequest(appId: string, file: Blob): Promise<ApiResult<{ icon: string }>> {
+  const body = new FormData();
+  body.append('file', file, 'icon.png');
+  const res = await fetch(`${BASE}/admin/apps/${encodeURIComponent(appId)}/icon`, {
+    method: 'POST', body, credentials: 'include', cache: 'no-store',
+  });
+  return { ok: res.ok, status: res.status, data: await res.json().catch(() => ({})) };
+}
 
 export const deleteAppRequest = (app_id: string) =>
   post<{ success: boolean; message: string }>('admin/apps/delete', { app_id });

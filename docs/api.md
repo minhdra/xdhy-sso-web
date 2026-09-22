@@ -28,6 +28,7 @@ của `api-sso` (`GET /api/docs/api-sso/` qua gateway) — xem
 | `getApps` | `GET /apps` | `pages/HomePage.tsx` |
 | `getAdminApps` | `GET /admin/apps` | `pages/account/AppsAdminPanel.tsx` |
 | `upsertAppRequest` | `POST /admin/apps` | `pages/account/AppsAdminPanel.tsx` (modal Thêm/Sửa) |
+| `uploadAppIconRequest` | `POST /admin/apps/{app_id}/icon` | Upload ảnh PNG 46 × 46 sau khi lưu app; ảnh nguồn tối đa 1MB, đường dẫn ghi vào `a_app.icon` |
 | `deleteAppRequest` | `POST /admin/apps/delete` | `pages/account/AppsAdminPanel.tsx` |
 | `getAppAccessRequest` | `GET /admin/apps/{app_id}/access` | Danh sách người đang được cấp trực tiếp |
 | `getAdminUsers` | `GET /admin/users` | Tải khi mở modal quyền để dựng một danh sách checkbox đầy đủ |

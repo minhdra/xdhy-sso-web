@@ -2,7 +2,7 @@ import { ArrowRightOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Alert, Button, Empty, Skeleton, Tag, Typography } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 
-import { getApps, type SsoApp } from '../api';
+import { avatarSrc, getApps, type SsoApp } from '../api';
 import AppHeader from '../components/AppHeader';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useSessionStore } from '../store/session';
@@ -95,9 +95,9 @@ export default function HomePage() {
               >
                 <span
                   className='ssoAppCard-icon'
-                  style={{ background: app.color }}
+                  style={{ background: app.icon ? 'transparent' : app.color }}
                 >
-                  {(app.app_name.trim() || app.app_key).charAt(0).toUpperCase()}
+                  {app.icon ? <img src={avatarSrc(app.icon)} alt="" width={46} height={46} /> : (app.app_name.trim() || app.app_key).charAt(0).toUpperCase()}
                 </span>
                 <span className='ssoAppCard-body'>
                   <span className='ssoAppCard-name'>
@@ -122,7 +122,7 @@ export default function HomePage() {
       <footer className='ssoFooter'>
         <div className='ssoFooter-inner'>
           <span>
-            © {new Date().getFullYear()} XDHY · Một tài khoản cho mọi ứng dụnggg
+            © {new Date().getFullYear()} XDHY · Một tài khoản cho mọi ứng dụng
           </span>
           <nav aria-label='Liên kết tài khoản'>
             <a href='/account'>Quản lý tài khoản</a>
