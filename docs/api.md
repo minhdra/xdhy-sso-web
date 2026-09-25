@@ -47,9 +47,9 @@ tự `throw` khi lỗi (khác `build-web/src/lib/api.ts` là axios interceptor t
 
 ## `avatarSrc()` — 2 dạng đường dẫn cũ/mới
 
-Giá trị `avatar` lưu trong `user_profiles` có thể ở 2 dạng: đường dẫn mới do `api-sso` ghi
-(`/api-sso/uploads/avatars/...`) hoặc đường dẫn cũ kế thừa từ `api-core`/`build-web`
-(`uploads\yyyy-mm-dd\...`, dùng `\` — Windows-style path do code cũ). `avatarSrc()` (`api.ts`) quy cả 2
+Giá trị `avatar` lưu trong `user_profiles`: từ 25/09/2026 avatar mới do **api-core** lưu
+theo format của api-core (`uploads\yyyy-mm-dd\...`, dùng `\` — Windows-style path; api-sso chỉ chuyển
+tiếp file); record cũ có thể là `/api-sso/uploads/avatars/...` (api-sso từng tự lưu, vẫn serve). `avatarSrc()` (`api.ts`) quy cả 2
 về URL gọi được từ trình duyệt: dạng mới → `${GATEWAY_URL}/api/api-sso/uploads/...`; dạng cũ →
 `${GATEWAY_URL}/api/api-core/uploads/...` (route cũ vẫn còn, `api-core` không bị sửa — xem
 `api-sso/docs/architecture.md`).

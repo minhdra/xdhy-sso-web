@@ -75,6 +75,8 @@ sau khi đăng nhập thật, dẫn thẳng nạn nhân sang trang giả mạo c
 có ô nhập URL. **Bối cảnh:** phương án đầu (nhanh hơn để làm) là cho dán URL ảnh có sẵn — user yêu cầu
 rõ phải là upload thật. **Đánh đổi:** cần thêm `multer` + static serve ở `api-sso` (xem
 `api-sso/docs/architecture.md` mục Upload avatar) thay vì chỉ validate 1 chuỗi URL.
+Từ 25/09/2026 file vật lý chuyển về **api-core** (api-sso chỉ nhận multipart rồi chuyển tiếp) để mọi
+app đọc cùng 1 dạng path của api-core (`uploads/yyyy-mm-dd/...`) — sso-web không đổi gì, endpoint + response giữ nguyên.
 
 ## Trang quản trị ứng dụng nằm trong tab của `AccountPage`, không phải route `/admin` riêng
 
