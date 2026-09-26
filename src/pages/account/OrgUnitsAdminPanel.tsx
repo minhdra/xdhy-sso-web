@@ -37,6 +37,8 @@ export default function OrgUnitsAdminPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingRow, setEditingRow] = useState<OrgUnitRow | null>(null);
+  const isEdit = !!editingRow;
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(async () => {
@@ -56,19 +58,27 @@ export default function OrgUnitsAdminPanel() {
   useEffect(() => void load(), [load]);
 
   const open = (row?: OrgUnitRow) => {
-    form.resetFields();
-    if (row) {
-      form.setFieldsValue({
-        id: row[cfg.idKey] as number,
-        name: row[cfg.nameKey] as string,
-        phone: row.phone ?? '',
-        fax: row.fax ?? '',
-        address: row.address ?? '',
-        description: row.description ?? '',
-      });
-    }
+    setEditingRow(row ?? null);
     setModalOpen(true);
   };
+
+  // Đổ giá trị SAU khi modal mở (Form mới gắn vào lúc đó) - set trước khi mở
+  // thì form nhận rỗng, bấm Lưu thành thêm mới thay vì sửa (bug đã gặp khi test).
+  useEffect(() => {
+    if (!modalOpen) return;
+    form.resetFields();
+    if (editingRow) {
+      form.setFieldsValue({
+        id: editingRow[cfg.idKey] as number,
+        name: editingRow[cfg.nameKey] as string,
+        phone: editingRow.phone ?? '',
+        fax: editingRow.fax ?? '',
+        address: editingRow.address ?? '',
+        description: editingRow.description ?? '',
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalOpen, editingRow]);
 
   const handleSave = async (v: UnitForm) => {
     setSaving(true);
@@ -123,6 +133,10 @@ export default function OrgUnitsAdminPanel() {
         <Segmented
           value={kind}
           onChange={(v) => {
+            // Xoá dữ liệu loại cũ NGAY: rowKey đổi theo loại mới, để rows cũ lại thì
+            // mọi key thành "undefined" (trùng) -> React để sót dòng rỗng.
+            setRows([]);
+            setTotal(0);
             setKind(v as OrgUnitKind);
             setPage(1);
             setKeyword('');
@@ -153,7 +167,7 @@ export default function OrgUnitsAdminPanel() {
 
       <Table<OrgUnitRow>
         className="ssoAppsAdmin-table"
-        rowKey={(r) => String(r[cfg.idKey])}
+        rowKey={(r) => `${kind}-${String(r[cfg.idKey])}`}
         size="small"
         loading={loading}
         dataSource={rows}
@@ -195,14 +209,14 @@ export default function OrgUnitsAdminPanel() {
       />
 
       <Modal
-        title={`${form.getFieldValue('id') ? 'Sửa' : 'Thêm'} ${cfg.label.toLowerCase()}`}
+        title={`${isEdit ? 'Sửa' : 'Thêm'} ${cfg.label.toLowerCase()}`}
         open={modalOpen}
         onCancel={() => setModalOpen(false)}
         onOk={() => form.submit()}
         confirmLoading={saving}
         okText="Lưu"
         cancelText="Huỷ"
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={handleSave}>
           <Form.Item name="id" hidden>

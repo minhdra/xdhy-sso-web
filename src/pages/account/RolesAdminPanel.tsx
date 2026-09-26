@@ -40,11 +40,15 @@ export default function RolesAdminPanel() {
   }, [page, keyword]);
   useEffect(() => void load(), [load]);
 
-  const open = (role?: OrgRole) => {
+  const open = (role?: OrgRole) => setEditing(role ?? 'new');
+
+  // Đổ giá trị SAU khi modal mở (xem OrgUnitsAdminPanel - set trước khi mở form nhận rỗng).
+  useEffect(() => {
+    if (editing === null) return;
     form.resetFields();
-    if (role) form.setFieldsValue({ ...role, description: role.description ?? '' });
-    setEditing(role ?? 'new');
-  };
+    if (editing !== 'new') form.setFieldsValue({ ...editing, description: editing.description ?? '' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing]);
 
   const handleSave = async (v: Partial<OrgRole>) => {
     setSaving(true);
@@ -179,7 +183,7 @@ export default function RolesAdminPanel() {
         confirmLoading={saving}
         okText="Lưu"
         cancelText="Huỷ"
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={handleSave}>
           <Form.Item

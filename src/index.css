@@ -1010,7 +1010,8 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
 
 @media (max-width: 780px) {
   .ssoAccount-body {
-    grid-template-columns: 1fr;
+    /* minmax(0, 1fr) - không để bảng có scroll.x kéo giãn lưới gây tràn ngang trang */
+    grid-template-columns: minmax(0, 1fr);
     gap: 14px;
   }
   .ssoAccount-nav {
@@ -1276,4 +1277,22 @@ body {
 /* Bộ lọc phía trên bảng ở các màn quản trị tổ chức (26/09/2026) */
 .ssoOrg-filters {
   margin-bottom: 12px;
+}
+.ssoAccount-panel {
+  min-width: 0;
+}
+/* Ô 2 dòng (tên + phụ) trong bảng quản trị: cắt "..." thay vì tràn sang cột bên */
+.ssoOrg-cell {
+  display: grid;
+  min-width: 0;
+}
+.ssoOrg-cell > span,
+.ssoOrg-cell > small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ssoOrg-cell > small {
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
 }

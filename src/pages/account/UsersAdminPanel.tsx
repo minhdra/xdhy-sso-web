@@ -126,13 +126,16 @@ export default function UsersAdminPanel() {
     })();
   }, []);
 
-  const openCreate = () => {
-    form.resetFields();
-    setEditing('new');
-  };
+  const openCreate = () => setEditing('new');
+
+  // Form gắn vào khi modal mở - reset ở đây; sửa thì openEdit đổ giá trị sau
+  // khi tải xong chi tiết (lúc đó modal đã mở).
+  useEffect(() => {
+    if (editing !== null) form.resetFields();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editing]);
 
   const openEdit = async (userId: string) => {
-    form.resetFields();
     setEditing(userId);
     setLoadingDetail(true);
     try {
@@ -304,7 +307,7 @@ export default function UsersAdminPanel() {
         size="small"
         loading={loading}
         dataSource={rows}
-        scroll={{ x: 720 }}
+        scroll={{ x: 640 }}
         pagination={{
           current: page,
           pageSize: PAGE_SIZE,
@@ -317,6 +320,7 @@ export default function UsersAdminPanel() {
           {
             title: 'Người dùng',
             key: 'user',
+            ellipsis: true,
             render: (_, u) => (
               <Space size={10}>
                 <Avatar
@@ -327,9 +331,10 @@ export default function UsersAdminPanel() {
                 >
                   {u.full_name?.trim().charAt(0).toUpperCase()}
                 </Avatar>
-                <div className="ssoAccess-userIdentity">
-                  <span>
-                    {u.full_name} {u.online_flag === 1 && <Tag color="error">Đã khoá</Tag>}
+                <div className="ssoOrg-cell">
+                  <span title={u.full_name}>
+                    {u.online_flag === 1 && <Tag color="error">Đã khoá</Tag>}
+                    {u.full_name}
                   </span>
                   <small>@{u.user_name}</small>
                 </div>
@@ -339,9 +344,10 @@ export default function UsersAdminPanel() {
           {
             title: 'Liên hệ',
             key: 'contact',
+            width: 190,
             responsive: ['md'],
             render: (_, u) => (
-              <div className="ssoAccess-userIdentity">
+              <div className="ssoOrg-cell" title={u.email ?? undefined}>
                 <span>{u.email}</span>
                 <small>{u.phone_number}</small>
               </div>
@@ -350,9 +356,10 @@ export default function UsersAdminPanel() {
           {
             title: 'Chức vụ / Phòng ban',
             key: 'org',
+            width: 170,
             responsive: ['lg'],
             render: (_, u) => (
-              <div className="ssoAccess-userIdentity">
+              <div className="ssoOrg-cell" title={[u.position_name, u.department_name, u.branch_name].filter(Boolean).join(' · ')}>
                 <span>{u.position_name}</span>
                 <small>
                   {[u.department_name, u.branch_name].filter(Boolean).join(' · ')}
@@ -360,12 +367,11 @@ export default function UsersAdminPanel() {
               </div>
             ),
           },
-          { title: 'Nhóm quyền', dataIndex: 'role_group', responsive: ['xl'], ellipsis: true },
+          { title: 'Nhóm quyền', dataIndex: 'role_group', width: 150, responsive: ['xxl'], ellipsis: true },
           {
             title: '',
             key: 'actions',
             width: 150,
-            fixed: 'right',
             render: (_, u) => {
               const self = u.user_id === me?.user_id;
               return (
@@ -422,7 +428,7 @@ export default function UsersAdminPanel() {
         okText="Lưu"
         cancelText="Huỷ"
         width={720}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={form} layout="vertical" onFinish={handleSave} disabled={loadingDetail}>
           <Row gutter={16}>
