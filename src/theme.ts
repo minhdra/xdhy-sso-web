@@ -87,6 +87,8 @@ export const PRIMARY = "#2563a6";
 export const getThemeConfig = (
   mode: ThemeMode,
   fontSizeMode: FontSizeMode = "standard",
+  // Màu chủ đạo theo thương hiệu (store/branding.ts) - mặc định PRIMARY.
+  primary: string = PRIMARY,
 ): ThemeConfig => ({
   algorithm:
     mode === "dark" ? antTheme.darkAlgorithm : antTheme.defaultAlgorithm,
@@ -94,7 +96,7 @@ export const getThemeConfig = (
     fontFamily:
       "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     fontSize: fontSizeMode === "large" ? 16 : 13,
-    colorPrimary: PRIMARY,
+    colorPrimary: primary,
     colorSuccess: "#53c31b",
     colorInfo: "#3fa9ff",
     colorWarning: "#ffbf69",

@@ -402,6 +402,44 @@ export const retrySync = (target?: SyncTarget | null) =>
 export const resyncTarget = (target: SyncTarget) =>
   post<OkMessage & { count: number }>('admin/org/sync/resync', { target });
 
+// ---- Thương hiệu (26/09/2026) ----
+export interface Branding {
+  org_name: string;
+  short_name: string;
+  app_name: string;
+  tagline: string | null;
+  login_heading: string | null;
+  login_description: string | null;
+  primary_color: string;
+  footer_text: string | null;
+  footer_links: { label: string; url: string }[];
+  // URL tải được (đã resolve) hoặc null = dùng file mặc định của sso-web
+  logo_light: string | null;
+  logo_dark: string | null;
+  favicon: string | null;
+  login_background: string | null;
+}
+export type BrandingImageKind = 'logo_light' | 'logo_dark' | 'favicon' | 'login_background';
+export type BrandingText = Omit<Branding, BrandingImageKind>;
+export const getBranding = () => get<Branding>('branding');
+export const updateBranding = (payload: BrandingText) => put<OkMessage>('admin/branding', payload);
+export async function uploadBrandingImage(
+  kind: BrandingImageKind,
+  file: File,
+): Promise<ApiResult<{ success: boolean; url: string }>> {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${BASE}/admin/branding/${kind}`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: appRequestHeaders(),
+    body: form,
+  });
+  return { ok: res.ok, status: res.status, data: await res.json().catch(() => ({})) };
+}
+export const resetBrandingImage = (kind: BrandingImageKind) =>
+  request<{ success: boolean }>('DELETE', `admin/branding/${kind}`);
+
 // ---- Sessions ----
 export interface SsoSession {
   session_id: string;

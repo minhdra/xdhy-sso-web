@@ -10,15 +10,16 @@ import { useNavigate } from "react-router-dom";
 import { avatarSrc, logoutRequest } from "../api";
 import { avatarColor } from "../avatarColor";
 import { useSessionStore } from "../store/session";
+import { logoFor, useBrandingStore } from "../store/branding";
 import { useThemeStore } from "../store/theme";
 
-const BRAND_NAME = "XDHY";
 
 export default function AppHeader() {
   const navigate = useNavigate();
   const user = useSessionStore((s) => s.user);
   const clear = useSessionStore((s) => s.clear);
   const mode = useThemeStore((s) => s.mode);
+  const branding = useBrandingStore((s) => s.branding);
   const toggleTheme = useThemeStore((s) => s.toggle);
   const fontSizeMode = useThemeStore((s) => s.fontSizeMode);
   const setFontSizeMode = useThemeStore((s) => s.setFontSizeMode);
@@ -60,8 +61,8 @@ export default function AppHeader() {
           type="button"
         >
           <img
-            src="/logo.png"
-            alt={BRAND_NAME}
+            src={logoFor(branding, mode)}
+            alt={branding.short_name}
             onError={(e) => (e.currentTarget.style.display = "none")}
           />
         </button>

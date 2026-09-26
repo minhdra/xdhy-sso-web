@@ -1,9 +1,10 @@
 import { useEffect } from 'react';
 
-const BRAND_NAME = 'An Trường Phát Hưng Yên';
+import { useBrandingStore } from '../store/branding';
 
 export function useDocumentTitle(title: string): void {
+  const orgName = useBrandingStore((s) => s.branding.org_name);
   useEffect(() => {
-    document.title = `${title} | ${BRAND_NAME}`;
-  }, [title]);
+    document.title = `${title} | ${orgName}`;
+  }, [title, orgName]);
 }

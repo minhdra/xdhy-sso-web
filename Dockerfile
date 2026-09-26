@@ -22,6 +22,19 @@ ENV VITE_BASE_URL=$VITE_BASE_URL
 # host-only, toggle vẫn chạy nhưng không lan sang app khác.
 ARG VITE_COOKIE_DOMAIN
 ENV VITE_COOKIE_DOMAIN=$VITE_COOKIE_DOMAIN
+# Thẻ meta/Open Graph tĩnh trong index.html (vite.config.ts brandingMeta) -
+# rỗng = giá trị mặc định (An Trường Phát Hưng Yên / xdhy.vn). Mỗi công ty truyền
+# bộ riêng. Tên/logo hiển thị trong app thì đổi ở tab Thương hiệu (DB).
+ARG VITE_ORG_NAME
+ARG VITE_SHORT_NAME
+ARG VITE_APP_NAME
+ARG VITE_SITE_URL
+ARG VITE_THEME_COLOR
+ARG VITE_OG_IMAGE
+ARG VITE_DESCRIPTION
+ENV VITE_ORG_NAME=$VITE_ORG_NAME VITE_SHORT_NAME=$VITE_SHORT_NAME VITE_APP_NAME=$VITE_APP_NAME \
+    VITE_SITE_URL=$VITE_SITE_URL VITE_THEME_COLOR=$VITE_THEME_COLOR VITE_OG_IMAGE=$VITE_OG_IMAGE \
+    VITE_DESCRIPTION=$VITE_DESCRIPTION
 RUN pnpm run build
 
 FROM nginx:1.27-alpine AS production-stage

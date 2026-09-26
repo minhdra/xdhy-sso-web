@@ -18,11 +18,12 @@ import { useNavigate } from 'react-router-dom';
 import loginBadge from '../assets/login-badge.json';
 import { forgotPasswordRequest, getMe, loginRequest, refreshRequest } from '../api';
 import { PageLoading } from '../components/PageLoading';
+import { footerText, logoFor, useBrandingStore } from '../store/branding';
+import { useThemeStore } from '../store/theme';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useSessionStore } from '../store/session';
 import { RULES_FORM } from '../validator';
 
-const BRAND_NAME = 'XDHY';
 
 // Chặn open-redirect: chỉ theo `redirect` nếu là path nội bộ HOẶC origin nằm
 // trong domain cha được phép (build lúc dựng image).
@@ -53,6 +54,8 @@ function safeRedirectTarget(raw: string | null): string | null {
 type ViewMode = 'login' | 'forgot' | 'forgotSent';
 
 export default function LoginPage() {
+  const branding = useBrandingStore((st) => st.branding);
+  const themeMode = useThemeStore((st) => st.mode);
   useDocumentTitle('Đăng nhập');
   const navigate = useNavigate();
   const { token } = antdTheme.useToken();
@@ -222,8 +225,8 @@ export default function LoginPage() {
               <>
                 <img
                   className="logo"
-                  src="/logo.png"
-                  alt="Logo"
+                  src={logoFor(branding, themeMode)}
+                  alt={branding.short_name}
                   onError={(e) => (e.currentTarget.style.display = 'none')}
                 />
 
@@ -328,18 +331,21 @@ export default function LoginPage() {
               </>
             )}
             <Typography.Text type="secondary" className="footer">
-              © An Trường Phát Hưng Yên. All rights reserved.
+              {footerText(branding)}
             </Typography.Text>
           </div>
         </div>
-        <div className="illustrationSide">
+        <div
+          className={`illustrationSide${branding.login_background ? ' has-image' : ''}`}
+          style={
+            branding.login_background
+              ? { backgroundImage: `url("${branding.login_background}")` }
+              : undefined
+          }
+        >
           <div className="illustrationCopy">
-            <h2>
-              Cổng truy cập chung của
-              <br />
-              doanh nghiệp
-            </h2>
-            <p>Đăng nhập một lần để sử dụng các ứng dụng nội bộ được kết nối trong {BRAND_NAME}.</p>
+            {branding.login_heading && <h2>{branding.login_heading}</h2>}
+            {branding.login_description && <p>{branding.login_description}</p>}
           </div>
           <div ref={illustrationRef} className="illustrationAnim" />
         </div>

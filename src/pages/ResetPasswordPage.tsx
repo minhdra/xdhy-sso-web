@@ -3,6 +3,8 @@ import { App as AntdApp, Button, Form, Input, Result, Typography, theme as antdT
 import { useState } from 'react';
 
 import { resetPasswordConfirmRequest } from '../api';
+import { footerText, logoFor, useBrandingStore } from '../store/branding';
+import { useThemeStore } from '../store/theme';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { RULES_FORM } from '../validator';
 
@@ -10,6 +12,8 @@ import { RULES_FORM } from '../validator';
 // AuthService.forgotPassword (api-sso). Không có token thì không cho vào
 // form - link phải luôn có token thật, tự gõ URL tay không tính.
 export default function ResetPasswordPage() {
+  const branding = useBrandingStore((st) => st.branding);
+  const themeMode = useThemeStore((st) => st.mode);
   useDocumentTitle('Đặt lại mật khẩu');
   const { token: themeToken } = antdTheme.useToken();
   // notification qua App.useApp() - gọi tĩnh notification.xxx() không ăn
@@ -69,8 +73,8 @@ export default function ResetPasswordPage() {
               <>
                 <img
                   className="logo"
-                  src="/logo.png"
-                  alt="Logo"
+                  src={logoFor(branding, themeMode)}
+                  alt={branding.short_name}
                   onError={(e) => (e.currentTarget.style.display = 'none')}
                 />
                 <Typography.Title level={2} style={{ marginBottom: 4 }}>
@@ -130,7 +134,7 @@ export default function ResetPasswordPage() {
               </>
             )}
             <Typography.Text type="secondary" className="footer">
-              © An Trường Phát Hưng Yên. All rights reserved.
+              {footerText(branding)}
             </Typography.Text>
           </div>
         </div>

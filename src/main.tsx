@@ -4,6 +4,7 @@ import { BrowserRouter } from "react-router-dom";
 
 import App from "./App";
 import { recordDiagnostic } from './diagnostics';
+import { useBrandingStore } from "./store/branding";
 import ThemeProvider from "./ThemeProvider";
 import "./index.css";
 import {
@@ -23,6 +24,8 @@ setFontSizeModeCookie(initialFontSizeMode);
 document.documentElement.setAttribute("data-font-size", initialFontSizeMode);
 
 recordDiagnostic('app_boot_started');
+// Thương hiệu tải song song, không chặn render (chưa có thì dùng mặc định).
+void useBrandingStore.getState().load();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

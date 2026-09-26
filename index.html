@@ -5,49 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- Dùng chung bộ icon với build-web (cùng thương hiệu XDHY, xem
     build-web/index.html) - chưa từng có favicon riêng cho sso-web trước đây. -->
+    <!-- branding-meta:start - khối này được api-sso thay bằng thẻ lấy từ DB (tab
+         Thương hiệu) khi trang đi qua GET /api-sso/render-page (xem config/default.conf). -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
-    <title>Tài khoản — An Trường Phát Hưng Yên</title>
+    <title>{{APP_NAME}} — {{ORG_NAME}}</title>
     <meta
       name="description"
-      content="Cổng đăng nhập một lần (SSO) của An Trường Phát Hưng Yên — đăng nhập một lần, dùng chung cho mọi ứng dụng nội bộ: công trình, công việc, tài chính."
+      content="{{DESCRIPTION}}"
     />
-    <meta name="application-name" content="XDHY SSO" />
-    <meta name="author" content="An Trường Phát Hưng Yên" />
-    <meta name="theme-color" content="#2563a6" />
+    <meta name="application-name" content="{{SHORT_NAME}} SSO" />
+    <meta name="author" content="{{ORG_NAME}}" />
+    <meta name="theme-color" content="{{THEME_COLOR}}" />
     <!-- Cổng đăng nhập nội bộ - KHÔNG cho search engine lập chỉ mục. -->
     <meta name="robots" content="noindex, nofollow" />
     <meta name="format-detection" content="telephone=no" />
-    <!-- Trang chủ SSO = https://xdhy.vn (task-web ở congtrinh.xdhy.vn...). -->
-    <link rel="canonical" href="https://xdhy.vn/" />
+    <!-- {{...}} thay lúc build theo biến VITE_* (vite.config.ts brandingMeta) - mỗi
+         triển khai 1 bộ giá trị; bot xem trước link (Zalo/FB) chỉ đọc HTML tĩnh này. -->
+    <link rel="canonical" href="{{SITE_URL}}/" />
 
     <!-- Open Graph (Facebook/Zalo/khi dán link) -->
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="An Trường Phát Hưng Yên" />
-    <meta property="og:title" content="Đăng nhập — An Trường Phát Hưng Yên" />
+    <meta property="og:site_name" content="{{ORG_NAME}}" />
+    <meta property="og:title" content="Đăng nhập — {{ORG_NAME}}" />
     <meta
       property="og:description"
-      content="Cổng đăng nhập một lần (SSO) cho hệ thống nội bộ An Trường Phát Hưng Yên."
+      content="Cổng đăng nhập một lần (SSO) cho hệ thống nội bộ {{ORG_NAME}}."
     />
-    <meta property="og:url" content="https://xdhy.vn/" />
+    <meta property="og:url" content="{{SITE_URL}}/" />
     <!-- Tạm dùng logo.png. Nên thêm public/og-image.png (1200x630) cho ảnh
          preview đẹp khi dán link, rồi đổi og:image + twitter:image sang
          /og-image.png và thêm og:image:width=1200 / og:image:height=630. -->
-    <meta property="og:image" content="https://xdhy.vn/logo.png" />
-    <meta property="og:image:alt" content="An Trường Phát Hưng Yên — Cổng đăng nhập" />
+    <meta property="og:image" content="{{OG_IMAGE}}" />
+    <meta property="og:image:alt" content="{{ORG_NAME}} — Cổng đăng nhập" />
     <meta property="og:locale" content="vi_VN" />
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Đăng nhập — An Trường Phát Hưng Yên" />
+    <meta name="twitter:title" content="Đăng nhập — {{ORG_NAME}}" />
     <meta
       name="twitter:description"
-      content="Cổng đăng nhập một lần (SSO) cho hệ thống nội bộ An Trường Phát Hưng Yên."
+      content="Cổng đăng nhập một lần (SSO) cho hệ thống nội bộ {{ORG_NAME}}."
     />
-    <meta name="twitter:image" content="https://xdhy.vn/logo.png" />
+    <meta name="twitter:image" content="{{OG_IMAGE}}" />
+    <!-- branding-meta:end -->
     <script>
       // OrbStack phục vụ cả HTTP và HTTPS, nhưng SSO dùng cookie Secure và
       // gateway chỉ cho phép origin HTTPS. Chuyển scheme trước khi React gửi

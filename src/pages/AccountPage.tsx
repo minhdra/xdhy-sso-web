@@ -1,6 +1,7 @@
 import {
   ApartmentOutlined,
   AppstoreOutlined,
+  BgColorsOutlined,
   IdcardOutlined,
   LaptopOutlined,
   LockOutlined,
@@ -14,6 +15,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import AppHeader from '../components/AppHeader';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
+import { useBrandingStore } from '../store/branding';
 import { useSessionStore } from '../store/session';
 const ProfilePanel = lazy(() => import('./account/ProfilePanel'));
 const PasswordPanel = lazy(() => import('./account/PasswordPanel'));
@@ -23,6 +25,7 @@ const UsersAdminPanel = lazy(() => import('./account/UsersAdminPanel'));
 const OrgUnitsAdminPanel = lazy(() => import('./account/OrgUnitsAdminPanel'));
 const RolesAdminPanel = lazy(() => import('./account/RolesAdminPanel'));
 const SyncAdminPanel = lazy(() => import('./account/SyncAdminPanel'));
+const BrandingAdminPanel = lazy(() => import('./account/BrandingAdminPanel'));
 
 const PanelLoading = () => <div className="ssoRouteLoading" role="status" aria-label="Đang tải" />;
 
@@ -42,12 +45,14 @@ const ADMIN_TABS = [
   { key: 'org-admin', label: 'Tổ chức', icon: <ApartmentOutlined />, color: '#b7791f' },
   { key: 'roles-admin', label: 'Nhóm quyền', icon: <SafetyCertificateOutlined />, color: '#9b3fb5' },
   { key: 'sync-admin', label: 'Đồng bộ', icon: <SyncOutlined />, color: '#4a6072' },
+  { key: 'branding-admin', label: 'Thương hiệu', icon: <BgColorsOutlined />, color: '#d0527a' },
 ] as const;
 
 export default function AccountPage() {
   useDocumentTitle('Quản lý tài khoản');
   const [params, setParams] = useSearchParams();
   const isAdmin = useSessionStore((s) => s.user?.is_admin ?? false);
+  const shortName = useBrandingStore((s) => s.branding.short_name);
   const TABS = isAdmin ? [...BASE_TABS, ...ADMIN_TABS] : BASE_TABS;
   const tab = TABS.some((t) => t.key === params.get('tab')) ? params.get('tab')! : 'profile';
   AntdApp.useApp();
@@ -57,7 +62,7 @@ export default function AccountPage() {
       <AppHeader />
       <main className="ssoAccount">
         <h1 className="ssoAccount-title">Quản lý tài khoản</h1>
-        <p className="ssoAccount-sub">Thông tin và bảo mật cho tài khoản XDHY của bạn.</p>
+        <p className="ssoAccount-sub">Thông tin và bảo mật cho tài khoản {shortName} của bạn.</p>
 
         <div className="ssoAccount-body">
           <nav className="ssoAccount-nav">
@@ -86,6 +91,7 @@ export default function AccountPage() {
               {tab === 'org-admin' && isAdmin && <OrgUnitsAdminPanel />}
               {tab === 'roles-admin' && isAdmin && <RolesAdminPanel />}
               {tab === 'sync-admin' && isAdmin && <SyncAdminPanel />}
+              {tab === 'branding-admin' && isAdmin && <BrandingAdminPanel />}
             </Suspense>
           </section>
         </div>

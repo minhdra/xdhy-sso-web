@@ -352,6 +352,21 @@ body {
     display: none;
   }
 }
+.illustrationSide.has-image {
+  /* Ảnh nền do admin tải (Thương hiệu) - phủ lớp tối để chữ trắng đọc được,
+     ẩn hoạt hình mặc định. */
+  background-size: cover;
+  background-position: center;
+}
+.illustrationSide.has-image::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.15));
+}
+.illustrationSide.has-image .illustrationAnim {
+  display: none;
+}
 .illustrationCopy {
   position: relative;
   z-index: 1;
@@ -1316,4 +1331,43 @@ body {
 .ssoOrg-cell > small {
   color: var(--color-text-secondary);
   font-size: 0.75rem;
+}
+
+/* Tab Thương hiệu (BrandingAdminPanel, 26/09/2026) */
+.ssoBrand-preview {
+  position: relative;
+  display: grid;
+  gap: 8px;
+  padding: 18px 16px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.ssoBrand-previewBar {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+}
+.ssoBrand-image {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.ssoBrand-imageBox {
+  flex: none;
+  width: 120px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-page-bg);
+  overflow: hidden;
+}
+.ssoBrand-imageBox.is-dark {
+  background: #1f2329;
+}
+.ssoBrand-imageBox img {
+  max-width: 104px;
+  object-fit: contain;
 }

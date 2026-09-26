@@ -6,8 +6,10 @@ import { avatarSrc, getApps, type SsoApp } from '../api';
 import AppHeader from '../components/AppHeader';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useSessionStore } from '../store/session';
+import { footerText, useBrandingStore } from '../store/branding';
 
 export default function HomePage() {
+  const branding = useBrandingStore((st) => st.branding);
   useDocumentTitle('Ứng dụng nội bộ');
   const user = useSessionStore((s) => s.user);
   const [apps, setApps] = useState<SsoApp[] | null>(null);
@@ -122,12 +124,17 @@ export default function HomePage() {
       <footer className='ssoFooter'>
         <div className='ssoFooter-inner'>
           <span>
-            © {new Date().getFullYear()} XDHY · Một tài khoản cho mọi ứng dụng
+            {[footerText(branding), branding.tagline].filter(Boolean).join(' · ')}
           </span>
           <nav aria-label='Liên kết tài khoản'>
             <a href='/account'>Quản lý tài khoản</a>
             <a href='/account?tab=password'>Bảo mật</a>
             <a href='/account?tab=sessions'>Thiết bị đăng nhập</a>
+            {branding.footer_links.map((l) => (
+              <a key={l.url + l.label} href={l.url} target={l.url.startsWith('/') ? undefined : '_blank'} rel='noreferrer'>
+                {l.label}
+              </a>
+            ))}
           </nav>
         </div>
       </footer>
