@@ -37,6 +37,7 @@ export default function AppsAdminPanel() {
   const [apps, setApps] = useState<AdminApp[] | null>(null);
   const [appsError, setAppsError] = useState(false);
   const [appModalOpen, setAppModalOpen] = useState(false);
+  const [editingAppId, setEditingAppId] = useState<string | null>(null);
   const [appForm] = Form.useForm<AppFormValues>();
   const [savingApp, setSavingApp] = useState(false);
   const [iconFile, setIconFile] = useState<File | null>(null);
@@ -83,9 +84,10 @@ export default function AppsAdminPanel() {
     appForm.resetFields();
     appForm.setFieldsValue({ sort_order: (apps?.length ?? 0) + 1 });
     setIconFile(null); setIconPreview(null);
+    setEditingAppId(null);
     setAppModalOpen(true);
   };
-  const openEdit = (app: AdminApp) => { setIconFile(null); setIconPreview(avatarSrc(app.icon) ?? null); appForm.setFieldsValue({ ...app, description: app.description ?? '' }); setAppModalOpen(true); };
+  const openEdit = (app: AdminApp) => { setEditingAppId(app.app_id); setIconFile(null); setIconPreview(avatarSrc(app.icon) ?? null); appForm.setFieldsValue({ ...app, description: app.description ?? '' }); setAppModalOpen(true); };
 
   const handleSaveApp = async (values: AppFormValues) => {
     setSavingApp(true);
@@ -190,7 +192,7 @@ export default function AppsAdminPanel() {
       { title: '', key: 'actions', width: 96, render: (_, app) => <Space size={2}><Button type="text" icon={<EditOutlined />} onClick={() => openEdit(app)} aria-label={`Sửa ${app.app_name}`} /><Popconfirm title="Xoá ứng dụng này?" description="Toàn bộ quyền đã cấp cũng bị xoá." okText="Xoá" cancelText="Huỷ" okButtonProps={{ danger: true }} onConfirm={() => handleDelete(app)}><Button type="text" danger icon={<DeleteOutlined />} aria-label={`Xoá ${app.app_name}`} /></Popconfirm></Space> },
     ]} />}
 
-    <Modal title={appForm.getFieldValue('app_id') ? 'Sửa ứng dụng' : 'Thêm ứng dụng'} open={appModalOpen} onCancel={() => setAppModalOpen(false)} onOk={() => appForm.submit()} confirmLoading={savingApp} okText="Lưu" cancelText="Huỷ" destroyOnClose>
+    <Modal title={editingAppId ? 'Sửa ứng dụng' : 'Thêm ứng dụng'} open={appModalOpen} onCancel={() => setAppModalOpen(false)} onOk={() => appForm.submit()} confirmLoading={savingApp} okText="Lưu" cancelText="Huỷ" forceRender>
       <Form form={appForm} layout="vertical" onFinish={handleSaveApp}>
         <Form.Item name="app_id" hidden><Input /></Form.Item>
         <Form.Item name="app_key" label="Mã ứng dụng" rules={[...RULES_FORM.required, { pattern: /^[a-z0-9-]+$/, message: 'Chỉ chữ thường, số và dấu gạch ngang (vd: build-web)' }]}><Input placeholder="vd: chat" /></Form.Item>
@@ -213,7 +215,7 @@ export default function AppsAdminPanel() {
       </Form>
     </Modal>
 
-    <Modal title={accessApp ? `Người truy cập · ${accessApp.app_name}` : ''} open={!!accessApp} onCancel={() => { setAccessApp(null); setShowUnassigned(false); }} onOk={handleSaveAccess} confirmLoading={savingAccess} okButtonProps={{ disabled: !hasAccessChanges || accessUsers === null }} okText={<span className="ssoAccess-saveLabel">Lưu thay đổi · Thêm {accessChanges.added} · Gỡ {accessChanges.removed}</span>} cancelText="Huỷ" width={720} destroyOnClose>
+    <Modal title={accessApp ? `Người truy cập · ${accessApp.app_name}` : ''} open={!!accessApp} onCancel={() => { setAccessApp(null); setShowUnassigned(false); }} onOk={handleSaveAccess} confirmLoading={savingAccess} okButtonProps={{ disabled: !hasAccessChanges || accessUsers === null }} okText={<span className="ssoAccess-saveLabel">Lưu thay đổi · Thêm {accessChanges.added} · Gỡ {accessChanges.removed}</span>} cancelText="Huỷ" width={720} destroyOnHidden>
       <div className="ssoAccess-summary"><div><strong>{accessApp?.direct_access_count ?? 0}</strong><span>được cấp trực tiếp</span></div><div><strong>{accessApp?.eligible_user_count ?? 0}</strong><span>người dùng đủ điều kiện</span></div><p>Quản trị viên hệ thống luôn có quyền truy cập và không xuất hiện trong danh sách grant.</p></div>
       <div className="ssoAccess-viewFilter">
         <Checkbox checked={showUnassigned} onChange={(event) => setShowUnassigned(event.target.checked)}>Chỉ người chưa được phân quyền</Checkbox>

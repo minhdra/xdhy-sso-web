@@ -1066,7 +1066,24 @@ textarea::placeholder,
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  flex-wrap: wrap;
+  /* Tách khỏi bộ lọc/bảng bên dưới. Không wrap trên desktop: mô tả dài tự
+     xuống dòng trong cột trái, nút giữ nguyên bên phải. */
+  margin-bottom: 20px;
+}
+.ssoPanel-headRow > :first-child {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.ssoPanel-headRow > .ant-btn {
+  flex: none;
+}
+.ssoPanel-headRow .ssoPanel-hint {
+  margin-bottom: 0;
+}
+@media (max-width: 560px) {
+  .ssoPanel-headRow {
+    flex-wrap: wrap;
+  }
 }
 .ssoPanel-headRow h2 {
   margin: 0 !important;
@@ -1274,6 +1291,10 @@ body {
   min-height: 120px;
 }
 
+/* Khối ảnh đại diện đầu form Thêm/Sửa người dùng */
+.ssoOrg-avatarRow {
+  margin-bottom: 16px;
+}
 /* Bộ lọc phía trên bảng ở các màn quản trị tổ chức (26/09/2026) */
 .ssoOrg-filters {
   margin-bottom: 12px;

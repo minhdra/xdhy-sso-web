@@ -327,6 +327,21 @@ export const deleteOrgUsers = (user_ids: string[]) =>
   post<OkMessage>('admin/org/users/delete', { user_ids });
 export const lockOrgUser = (user_id: string, online_flag: number) =>
   post<OkMessage>('admin/org/users/lock', { user_id, online_flag });
+// Admin đổi avatar hộ user - multipart field "file" (FE đã cắt vuông + nén).
+export async function uploadOrgUserAvatar(
+  user_id: string,
+  file: File,
+): Promise<ApiResult<OkMessage & { avatar: string }>> {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await fetch(`${BASE}/admin/org/users/${encodeURIComponent(user_id)}/avatar`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: appRequestHeaders(),
+    body: form,
+  });
+  return { ok: res.ok, status: res.status, data: await res.json().catch(() => ({})) };
+}
 export const resetOrgUserPassword = (user_id: string) =>
   post<OkMessage & { new_password: string; emailed: boolean }>('admin/org/users/reset-password', {
     user_id,

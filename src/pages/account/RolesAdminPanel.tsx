@@ -196,13 +196,13 @@ export default function RolesAdminPanel() {
               { max: 50 },
             ]}
           >
-            <Input disabled={isAdminRole} />
+            <Input disabled={isAdminRole} placeholder="vd: KE_TOAN" />
           </Form.Item>
           <Form.Item name="role_name" label="Tên nhóm" rules={[...RULES_FORM.required, { max: 250 }]}>
-            <Input />
+            <Input placeholder="vd: Kế toán" />
           </Form.Item>
           <Form.Item name="description" label="Mô tả">
-            <Input.TextArea autoSize={{ minRows: 2, maxRows: 4 }} />
+            <Input.TextArea autoSize={{ minRows: 2, maxRows: 4 }} placeholder="Nhóm này dành cho ai, làm gì" />
           </Form.Item>
         </Form>
       </Modal>

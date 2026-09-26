@@ -223,23 +223,23 @@ export default function OrgUnitsAdminPanel() {
             <Input />
           </Form.Item>
           <Form.Item name="name" label={`Tên ${cfg.label.toLowerCase()}`} rules={[...RULES_FORM.required, { max: 250 }]}>
-            <Input />
+            <Input placeholder={`Nhập tên ${cfg.label.toLowerCase()}`} />
           </Form.Item>
           {cfg.contact ? (
             <>
               <Form.Item name="phone" label="Điện thoại">
-                <Input />
+                <Input placeholder="vd: 0221 3xxx xxx" />
               </Form.Item>
               <Form.Item name="fax" label="Fax">
-                <Input />
+                <Input placeholder="Số fax (nếu có)" />
               </Form.Item>
               <Form.Item name="address" label="Địa chỉ">
-                <Input />
+                <Input placeholder="Số nhà, đường, phường/xã, tỉnh/thành" />
               </Form.Item>
             </>
           ) : (
             <Form.Item name="description" label="Mô tả">
-              <Input.TextArea autoSize={{ minRows: 2, maxRows: 4 }} />
+              <Input.TextArea autoSize={{ minRows: 2, maxRows: 4 }} placeholder="Nhiệm vụ, phạm vi của chức vụ" />
             </Form.Item>
           )}
         </Form>

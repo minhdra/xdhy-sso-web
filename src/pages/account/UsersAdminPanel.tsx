@@ -5,6 +5,7 @@ import {
   LockOutlined,
   PlusOutlined,
   UnlockOutlined,
+  UploadOutlined,
 } from '@ant-design/icons';
 import {
   Alert,
@@ -24,6 +25,7 @@ import {
   Tag,
   Tooltip,
   Typography,
+  Upload,
 } from 'antd';
 import dayjs, { type Dayjs } from 'dayjs';
 import { useCallback, useEffect, useState } from 'react';
@@ -41,8 +43,10 @@ import {
   resetOrgUserPassword,
   searchOrgUsers,
   updateOrgUser,
+  uploadOrgUserAvatar,
 } from '../../api';
 import { avatarColor } from '../../avatarColor';
+import { resizeImage } from '../../imageResize';
 import { useSessionStore } from '../../store/session';
 import { RULES_FORM } from '../../validator';
 
@@ -80,6 +84,10 @@ export default function UsersAdminPanel() {
   const [editing, setEditing] = useState<string | 'new' | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [saving, setSaving] = useState(false);
+  // Ảnh chọn trong form - chỉ tải lên khi bấm Lưu (sau khi tạo/sửa user thành công).
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+  const [formName, setFormName] = useState('');
   const [options, setOptions] = useState<Record<'branches' | 'departments' | 'positions' | 'roles', DropdownItem[]>>({
     branches: [],
     departments: [],
@@ -131,9 +139,42 @@ export default function UsersAdminPanel() {
   // Form gắn vào khi modal mở - reset ở đây; sửa thì openEdit đổ giá trị sau
   // khi tải xong chi tiết (lúc đó modal đã mở).
   useEffect(() => {
-    if (editing !== null) form.resetFields();
+    if (editing === null) return;
+    form.resetFields();
+    setAvatarFile(null);
+    setAvatarPreview(null);
+    setFormName('');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editing]);
+
+  const pickAvatar = (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      notification.error({ message: 'Chỉ nhận file ảnh.' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      notification.error({ message: 'Ảnh tối đa 5MB.' });
+      return;
+    }
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
+
+  // Cắt vuông 400px + nén WebP giống trang Thông tin cá nhân rồi tải lên.
+  const uploadAvatar = async (userId: string): Promise<boolean> => {
+    if (!avatarFile) return true;
+    const resized = await resizeImage(avatarFile, 400, 'cover', 'image/webp');
+    const isWebp = resized.type === 'image/webp';
+    const res = await uploadOrgUserAvatar(
+      userId,
+      new File([resized], isWebp ? 'avatar.webp' : 'avatar.png', { type: resized.type }),
+    );
+    if (!res.ok) {
+      notification.warning({ message: res.data.message || 'Đã lưu người dùng nhưng chưa tải được ảnh đại diện.' });
+      return false;
+    }
+    return true;
+  };
 
   const openEdit = async (userId: string) => {
     setEditing(userId);
@@ -142,6 +183,8 @@ export default function UsersAdminPanel() {
       const res = await getOrgUser(userId);
       if (!res.ok) throw new Error(res.data.message);
       const u = res.data;
+      setAvatarPreview(u.avatar ? avatarSrc(u.avatar) ?? null : null);
+      setFormName(u.full_name);
       form.setFieldsValue({
         full_name: u.full_name,
         email: u.email ?? '',
@@ -181,7 +224,9 @@ export default function UsersAdminPanel() {
         notification.error({ message: res.data.message || 'Không lưu được người dùng.' });
         return;
       }
-      notification.success({ message: res.data.message || 'Đã lưu người dùng.' });
+      const userId = editing === 'new' ? (res.data as unknown as { user_id: string }).user_id : (editing as string);
+      const avatarOk = await uploadAvatar(userId);
+      if (avatarOk) notification.success({ message: res.data.message || 'Đã lưu người dùng.' });
       setEditing(null);
       void load();
     } catch {
@@ -430,8 +475,38 @@ export default function UsersAdminPanel() {
         width={720}
         destroyOnHidden
       >
-        <Form form={form} layout="vertical" onFinish={handleSave} disabled={loadingDetail}>
-          <Row gutter={16}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleSave}
+          disabled={loadingDetail}
+          onValuesChange={(changed) => {
+            if ('full_name' in changed) setFormName(changed.full_name ?? '');
+          }}
+        >
+          <Space size={16} align="center" className="ssoOrg-avatarRow">
+            <Avatar
+              size={64}
+              src={avatarPreview ?? undefined}
+              style={{ background: avatarColor(typeof editing === 'string' ? editing : 'new'), color: '#fff', flex: 'none' }}
+            >
+              {(formName || '?').trim().charAt(0).toUpperCase()}
+            </Avatar>
+            <div>
+              <Upload
+                accept="image/*"
+                showUploadList={false}
+                beforeUpload={(file) => {
+                  pickAvatar(file);
+                  return false;
+                }}
+              >
+                <Button icon={<UploadOutlined />}>{avatarPreview ? 'Đổi ảnh đại diện' : 'Chọn ảnh đại diện'}</Button>
+              </Upload>
+              <div className="ssoPanel-hint">JPG, PNG, GIF, WEBP · tối đa 5MB · lưu khi bấm Lưu</div>
+            </div>
+          </Space>
+          <Row gutter={[16, 4]}>
             {isNew && (
               <>
                 <Col xs={24} md={12}>
@@ -443,7 +518,7 @@ export default function UsersAdminPanel() {
                       { pattern: /^[A-Za-z0-9._@-]+$/, message: 'Không dấu cách/ký tự đặc biệt' },
                     ]}
                   >
-                    <Input autoComplete="off" />
+                    <Input autoComplete="off" placeholder="vd: nguyenvana" />
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
@@ -452,14 +527,14 @@ export default function UsersAdminPanel() {
                     label="Mật khẩu"
                     rules={[...RULES_FORM.required, { min: 6, message: 'Tối thiểu 6 ký tự' }]}
                   >
-                    <Input.Password autoComplete="new-password" />
+                    <Input.Password autoComplete="new-password" placeholder="Tối thiểu 6 ký tự" />
                   </Form.Item>
                 </Col>
               </>
             )}
             <Col xs={24} md={12}>
               <Form.Item name="full_name" label="Họ tên" rules={[...RULES_FORM.required, { max: 60 }]}>
-                <Input />
+                <Input placeholder="vd: Nguyễn Văn A" />
               </Form.Item>
             </Col>
             <Col xs={24} md={12}>
@@ -468,18 +543,19 @@ export default function UsersAdminPanel() {
                 label="Email"
                 rules={[...RULES_FORM.required, { type: 'email', message: 'Email không hợp lệ' }]}
               >
-                <Input />
+                <Input placeholder="ten@congty.com" />
               </Form.Item>
             </Col>
             <Col xs={24} md={8}>
               <Form.Item name="phone_number" label="Số điện thoại">
-                <Input />
+                <Input placeholder="vd: 0912345678" />
               </Form.Item>
             </Col>
             <Col xs={12} md={8}>
               <Form.Item name="gender" label="Giới tính">
                 <Select
                   allowClear
+                  placeholder="Chọn giới tính"
                   options={[
                     { value: 1, label: 'Nam' },
                     { value: 2, label: 'Nữ' },
@@ -490,22 +566,22 @@ export default function UsersAdminPanel() {
             </Col>
             <Col xs={12} md={8}>
               <Form.Item name="date_of_birth" label="Ngày sinh">
-                <DatePicker format="DD/MM/YYYY" style={{ width: '100%' }} />
+                <DatePicker format="DD/MM/YYYY" placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
               </Form.Item>
             </Col>
             <Col xs={24} md={8}>
               <Form.Item name="branch_id" label="Chi nhánh" rules={RULES_FORM.required}>
-                <Select showSearch optionFilterProp="label" options={options.branches} />
+                <Select showSearch optionFilterProp="label" placeholder="Chọn chi nhánh" options={options.branches} />
               </Form.Item>
             </Col>
             <Col xs={24} md={8}>
               <Form.Item name="department_id" label="Phòng ban" rules={RULES_FORM.required}>
-                <Select showSearch optionFilterProp="label" options={options.departments} />
+                <Select showSearch optionFilterProp="label" placeholder="Chọn phòng ban" options={options.departments} />
               </Form.Item>
             </Col>
             <Col xs={24} md={8}>
               <Form.Item name="position_id" label="Chức vụ" rules={RULES_FORM.required}>
-                <Select showSearch optionFilterProp="label" options={options.positions} />
+                <Select showSearch optionFilterProp="label" placeholder="Chọn chức vụ" options={options.positions} />
               </Form.Item>
             </Col>
             <Col span={24}>
@@ -514,12 +590,18 @@ export default function UsersAdminPanel() {
                 label="Nhóm quyền"
                 extra="Tính năng của từng nhóm quyền được gán trong mỗi ứng dụng."
               >
-                <Select mode="multiple" allowClear optionFilterProp="label" options={options.roles} />
+                <Select
+                  mode="multiple"
+                  allowClear
+                  optionFilterProp="label"
+                  placeholder="Chọn nhóm quyền"
+                  options={options.roles}
+                />
               </Form.Item>
             </Col>
             <Col span={24}>
               <Form.Item name="description" label="Ghi chú">
-                <Input.TextArea autoSize={{ minRows: 2, maxRows: 4 }} />
+                <Input.TextArea autoSize={{ minRows: 2, maxRows: 4 }} placeholder="Ghi chú thêm (không bắt buộc)" />
               </Form.Item>
             </Col>
           </Row>
