@@ -1272,3 +1272,8 @@ body {
 .ssoRouteLoading {
   min-height: 120px;
 }
+
+/* Bộ lọc phía trên bảng ở các màn quản trị tổ chức (26/09/2026) */
+.ssoOrg-filters {
+  margin-bottom: 12px;
+}

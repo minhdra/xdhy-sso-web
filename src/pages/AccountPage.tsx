@@ -1,8 +1,12 @@
 import {
+  ApartmentOutlined,
   AppstoreOutlined,
   IdcardOutlined,
   LaptopOutlined,
   LockOutlined,
+  SafetyCertificateOutlined,
+  SyncOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 import { App as AntdApp } from 'antd';
 import { lazy, Suspense } from 'react';
@@ -15,6 +19,10 @@ const ProfilePanel = lazy(() => import('./account/ProfilePanel'));
 const PasswordPanel = lazy(() => import('./account/PasswordPanel'));
 const SessionsPanel = lazy(() => import('./account/SessionsPanel'));
 const AppsAdminPanel = lazy(() => import('./account/AppsAdminPanel'));
+const UsersAdminPanel = lazy(() => import('./account/UsersAdminPanel'));
+const OrgUnitsAdminPanel = lazy(() => import('./account/OrgUnitsAdminPanel'));
+const RolesAdminPanel = lazy(() => import('./account/RolesAdminPanel'));
+const SyncAdminPanel = lazy(() => import('./account/SyncAdminPanel'));
 
 const PanelLoading = () => <div className="ssoRouteLoading" role="status" aria-label="Đang tải" />;
 
@@ -25,20 +33,22 @@ const BASE_TABS = [
 ] as const;
 
 // Chỉ quản trị viên (is_admin, tính lại mỗi lần /me - xem requireAdmin.ts bên
-// api-sso) mới thấy tab này. BE tự chặn 403 nếu ai đó gọi thẳng API, tab ẩn ở
-// đây chỉ là UX - không phải lớp bảo vệ duy nhất.
-const ADMIN_TAB = {
-  key: 'apps-admin',
-  label: 'Quản lý ứng dụng',
-  icon: <AppstoreOutlined />,
-  color: '#c44a1a',
-} as const;
+// api-sso) mới thấy các tab này. BE tự chặn 403 nếu ai đó gọi thẳng API, tab
+// ẩn ở đây chỉ là UX - không phải lớp bảo vệ duy nhất. Người dùng/tổ chức/nhóm
+// quyền chuyển từ build-web sang đây 26/09/2026.
+const ADMIN_TABS = [
+  { key: 'apps-admin', label: 'Quản lý ứng dụng', icon: <AppstoreOutlined />, color: '#c44a1a' },
+  { key: 'users-admin', label: 'Người dùng', icon: <TeamOutlined />, color: '#0f8a6c' },
+  { key: 'org-admin', label: 'Tổ chức', icon: <ApartmentOutlined />, color: '#b7791f' },
+  { key: 'roles-admin', label: 'Nhóm quyền', icon: <SafetyCertificateOutlined />, color: '#9b3fb5' },
+  { key: 'sync-admin', label: 'Đồng bộ', icon: <SyncOutlined />, color: '#4a6072' },
+] as const;
 
 export default function AccountPage() {
   useDocumentTitle('Quản lý tài khoản');
   const [params, setParams] = useSearchParams();
   const isAdmin = useSessionStore((s) => s.user?.is_admin ?? false);
-  const TABS = isAdmin ? [...BASE_TABS, ADMIN_TAB] : BASE_TABS;
+  const TABS = isAdmin ? [...BASE_TABS, ...ADMIN_TABS] : BASE_TABS;
   const tab = TABS.some((t) => t.key === params.get('tab')) ? params.get('tab')! : 'profile';
   AntdApp.useApp();
 
@@ -72,6 +82,10 @@ export default function AccountPage() {
               {tab === 'password' && <PasswordPanel />}
               {tab === 'sessions' && <SessionsPanel />}
               {tab === 'apps-admin' && isAdmin && <AppsAdminPanel />}
+              {tab === 'users-admin' && isAdmin && <UsersAdminPanel />}
+              {tab === 'org-admin' && isAdmin && <OrgUnitsAdminPanel />}
+              {tab === 'roles-admin' && isAdmin && <RolesAdminPanel />}
+              {tab === 'sync-admin' && isAdmin && <SyncAdminPanel />}
             </Suspense>
           </section>
         </div>

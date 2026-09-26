@@ -246,6 +246,147 @@ export const removeAppAccessRequest = (app_id: string, user_ids: string[]) =>
     { user_ids },
   );
 
+// ---- Quản trị người dùng / tổ chức / nhóm quyền (chỉ admin, 26/09/2026 -
+// chuyển từ build-web/api-core sang SSO). Mọi thay đổi được api-sso đồng bộ
+// sang các app (tài chính, công việc, chat, meeting).
+export interface Paged<T> {
+  totalItems: number;
+  page: number;
+  pageSize: number;
+  pageCount: number;
+  data: T[];
+}
+export interface OkMessage {
+  success: boolean;
+  message: string;
+}
+export interface DropdownItem {
+  value: number | string;
+  label: string;
+}
+
+export interface OrgUserRow {
+  user_id: string;
+  user_name: string;
+  full_name: string;
+  avatar: string | null;
+  email: string | null;
+  phone_number: string | null;
+  online_flag: number | null;
+  position_name: string | null;
+  branch_name: string | null;
+  department_name: string | null;
+  role_group: string | null;
+}
+export interface OrgUserDetail {
+  user_id: string;
+  user_name: string;
+  type: string | null;
+  description: string | null;
+  online_flag: number | null;
+  full_name: string;
+  avatar: string | null;
+  gender: number | null;
+  date_of_birth: string | null;
+  email: string | null;
+  phone_number: string | null;
+  branch_id: number | null;
+  department_id: number | null;
+  position_id: number | null;
+  role_ids: string[];
+}
+export interface OrgUserPayload {
+  user_id?: string;
+  user_name?: string;
+  password?: string;
+  full_name: string;
+  email: string;
+  phone_number?: string;
+  gender?: number | null;
+  date_of_birth?: string | null;
+  type?: string;
+  description?: string;
+  branch_id: number;
+  department_id: number;
+  position_id: number;
+  role_ids?: string[];
+}
+export const searchOrgUsers = (body: {
+  pageIndex: number;
+  pageSize: number;
+  search_content?: string;
+  branch_id?: number | null;
+  department_id?: number | null;
+}) => post<Paged<OrgUserRow>>('admin/org/users/search', body);
+export const getOrgUser = (user_id: string) =>
+  get<OrgUserDetail>(`admin/org/users/${encodeURIComponent(user_id)}`);
+export const createOrgUser = (payload: OrgUserPayload) =>
+  post<OkMessage & { user_id: string }>('admin/org/users', payload);
+export const updateOrgUser = (payload: OrgUserPayload) => put<OkMessage>('admin/org/users', payload);
+export const deleteOrgUsers = (user_ids: string[]) =>
+  post<OkMessage>('admin/org/users/delete', { user_ids });
+export const lockOrgUser = (user_id: string, online_flag: number) =>
+  post<OkMessage>('admin/org/users/lock', { user_id, online_flag });
+export const resetOrgUserPassword = (user_id: string) =>
+  post<OkMessage & { new_password: string; emailed: boolean }>('admin/org/users/reset-password', {
+    user_id,
+  });
+
+// Chi nhánh / phòng ban / chức vụ dùng chung 1 khuôn màn hình.
+export type OrgUnitKind = 'branches' | 'departments' | 'positions';
+export interface OrgUnitRow {
+  branch_id?: number;
+  branch_name?: string;
+  department_id?: number;
+  department_name?: string;
+  position_id?: number;
+  position_name?: string;
+  phone?: string | null;
+  fax?: string | null;
+  address?: string | null;
+  description?: string | null;
+}
+export const searchOrgUnits = (kind: OrgUnitKind, body: { pageIndex: number; pageSize: number; search_content?: string }) =>
+  post<Paged<OrgUnitRow>>(`admin/org/${kind}/search`, body);
+export const getOrgUnitDropdown = (kind: OrgUnitKind) => get<DropdownItem[]>(`admin/org/${kind}/dropdown`);
+export const upsertOrgUnit = (kind: OrgUnitKind, payload: Record<string, unknown>) =>
+  post<OkMessage>(`admin/org/${kind}`, payload);
+export const deleteOrgUnits = (kind: OrgUnitKind, ids: number[]) =>
+  post<OkMessage>(`admin/org/${kind}/delete`, { ids });
+
+export interface OrgRole {
+  role_id: string;
+  role_code: string;
+  role_name: string;
+  description: string | null;
+}
+export const searchOrgRoles = (body: { pageIndex: number; pageSize: number; search_content?: string }) =>
+  post<Paged<OrgRole>>('admin/org/roles/search', body);
+export const getOrgRoleDropdown = () => get<DropdownItem[]>('admin/org/roles/dropdown');
+export const upsertOrgRole = (payload: Partial<Omit<OrgRole, 'role_id'>> & { role_id?: string | null }) => post<OkMessage>('admin/org/roles', payload);
+export const deleteOrgRoles = (role_ids: string[]) => post<OkMessage>('admin/org/roles/delete', { role_ids });
+
+export type SyncTarget = 'finance' | 'task' | 'chat' | 'meeting';
+export interface SyncStatus {
+  enabled_targets: SyncTarget[];
+  summary: { target: SyncTarget; pending: number; failed: number; last_error: string | null; oldest_pending: string | null }[];
+  failed: {
+    id: string;
+    target: SyncTarget;
+    entity: string;
+    op: string;
+    entity_id: string;
+    attempts: number;
+    last_error: string | null;
+    updated_at: string;
+  }[];
+}
+export const getSyncStatus = () => get<SyncStatus>('admin/org/sync/status');
+export const retrySync = (target?: SyncTarget | null) =>
+  post<OkMessage & { count: number }>('admin/org/sync/retry', { target: target ?? null });
+export const resyncTarget = (target: SyncTarget) =>
+  post<OkMessage & { count: number }>('admin/org/sync/resync', { target });
+
 // ---- Sessions ----
 export interface SsoSession {
   session_id: string;

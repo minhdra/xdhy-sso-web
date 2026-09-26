@@ -43,7 +43,7 @@ nhẹ bằng `transform`/`opacity`. App card stagger ngắn và panel tài kho�
 
 ```
 pages/            — LoginPage, ResetPasswordPage (công khai) + HomePage, AccountPage (cần đăng nhập)
-pages/account/    — 4 panel trong AccountPage: ProfilePanel, PasswordPanel, SessionsPanel, AppsAdminPanel
+pages/account/    — panel trong AccountPage: ProfilePanel, PasswordPanel, SessionsPanel + (chỉ admin) AppsAdminPanel, UsersAdminPanel, OrgUnitsAdminPanel, RolesAdminPanel, SyncAdminPanel
 components/       — AppHeader (menu user + toggle theme), RequireAuth (route guard)
 store/            — zustand: session.ts (phiên đăng nhập), theme.ts (sáng/tối)
 api.ts            — mọi lời gọi API, 1 hàm request() dùng chung
@@ -121,6 +121,10 @@ lại sau khi đã lưu dữ liệu; không ép reload giữa thao tác.
 | Mật khẩu | `PasswordPanel` | Đổi mật khẩu (mật khẩu cũ + mới + xác nhận) |
 | Phiên đăng nhập | `SessionsPanel` | Liệt kê thiết bị đang đăng nhập (gộp theo trình duyệt+hệ điều hành đoán từ User-Agent bằng `describeAgent`, không dùng thư viện), thu hồi từng phiên (trừ phiên hiện tại). `describeAgent` tách client không phải trình duyệt trước (app Dart, Postman/Bruno, okhttp/curl...), rồi webview in-app (Zalo/Facebook/Instagram/LINE/TikTok/Viber), rồi trình duyệt (kiểm tra iOS trước macOS vì UA iOS chứa "like Mac OS X"). **Giới hạn UA không giải quyết được:** iPad bật "Desktop site" gửi UA giống hệt Mac nên hiện "macOS". Thêm client/trình duyệt mới thì đối chiếu `SELECT user_agent, count(*) FROM a_session GROUP BY 1` xem còn rơi vào "Trình duyệt khác" không |
 | Quản lý ứng dụng | `AppsAdminPanel` | **Chỉ admin** — CRUD app; chọn ảnh icon tối đa 1MB, thu về PNG 138 × 138 để hiển thị sắc nét ở 46 px (app cũ chưa có ảnh vẫn hiện chữ trên nền màu); bảng hiển thị grant trực tiếp/tổng user; modal tải danh sách user khi mở, checkbox phản ánh quyền hiện tại và bộ lọc “Chỉ người chưa được phân quyền” chỉ ẩn các dòng đã chọn. Khi lưu, frontend tính delta thêm/gỡ. BE tự chặn 403 nếu gọi thẳng API, ẩn tab chỉ là UX |
+| Người dùng | `UsersAdminPanel` | **Chỉ admin** (26/09/2026, chuyển từ build-web): tìm/lọc theo chi nhánh-phòng ban (phân trang server, `pageIndex` từ 1), thêm/sửa (form gồm nhóm quyền - nhiều lựa chọn), khoá/mở khoá (khoá = đăng xuất mọi thiết bị), đặt lại mật khẩu (hiện mật khẩu mới + trạng thái gửi email), xoá (mềm). Không tự khoá/xoá chính mình |
+| Tổ chức | `OrgUnitsAdminPanel` | **Chỉ admin** — Segmented Chi nhánh / Phòng ban / Chức vụ, 1 khuôn bảng + modal (chi nhánh/phòng ban có điện thoại-fax-địa chỉ, chức vụ có mô tả). Trọng số chức vụ vẫn chỉnh ở app Công việc |
+| Nhóm quyền | `RolesAdminPanel` | **Chỉ admin** — nhóm quyền CHUNG (mã + tên + mô tả). Nhóm `sa` không xoá/đổi mã được. Gán tính năng cho nhóm làm ở từng app |
+| Đồng bộ | `SyncAdminPanel` | **Chỉ admin** — trạng thái hàng đợi đồng bộ sang Tài chính/Công việc/Chat/Họp (đang chờ, lỗi, lỗi gần nhất), "Thử lại lỗi", "Đồng bộ lại" toàn bộ 1 đích. Tự làm mới 10 giây |
 
 Tab admin ẩn ở FE **không phải lớp bảo vệ duy nhất** — `api-sso` có `requireAdmin` riêng, xem
 `api-sso/docs/architecture.md`.

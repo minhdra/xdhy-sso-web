@@ -35,6 +35,10 @@ của `api-sso` (`GET /api/docs/api-sso/` qua gateway) — xem
 | `getAppAccessCandidatesRequest` | `GET /admin/apps/{app_id}/access-candidates` | Chỉ gọi khi mở modal “Thêm người”; tìm kiếm/lọc/phân trang ở backend |
 | `addAppAccessRequest` | `POST /admin/apps/{app_id}/access/add` | Cộng quyền cho tập user được chọn, không ghi đè grant hiện tại |
 | `removeAppAccessRequest` | `POST /admin/apps/{app_id}/access/remove` | Gỡ từng người hoặc một nhóm được chọn |
+| `searchOrgUsers` / `getOrgUser` / `createOrgUser` / `updateOrgUser` / `deleteOrgUsers` / `lockOrgUser` / `resetOrgUserPassword` | `/admin/org/users/*` | `pages/account/UsersAdminPanel.tsx` (26/09/2026) |
+| `searchOrgUnits` / `getOrgUnitDropdown` / `upsertOrgUnit` / `deleteOrgUnits` | `/admin/org/{branches,departments,positions}/*` | `pages/account/OrgUnitsAdminPanel.tsx`; dropdown dùng cả ở form người dùng |
+| `searchOrgRoles` / `getOrgRoleDropdown` / `upsertOrgRole` / `deleteOrgRoles` | `/admin/org/roles/*` | `pages/account/RolesAdminPanel.tsx` |
+| `getSyncStatus` / `retrySync` / `resyncTarget` | `/admin/org/sync/*` | `pages/account/SyncAdminPanel.tsx` |
 | `avatarSrc(raw)` | — (không gọi API) | helper suy URL trình duyệt tải được từ giá trị `avatar` lưu trong DB — xem bên dưới |
 
 ## Quy ước response — khác `build-web`
