@@ -48,7 +48,7 @@ import {
 import { avatarColor } from '../../avatarColor';
 import { resizeImage } from '../../imageResize';
 import { useSessionStore } from '../../store/session';
-import { RULES_FORM } from '../../validator';
+import { capitalizeName, maxLen, RULES_FORM } from '../../validator';
 
 interface UserFormValues {
   user_name?: string;
@@ -545,7 +545,13 @@ export default function UsersAdminPanel() {
           </Space>
           <Row gutter={[16, 4]}>
             <Col xs={24} md={12}>
-              <Form.Item name="full_name" label="Họ tên" rules={[...RULES_FORM.required, { max: 60 }]}>
+              <Form.Item
+                name="full_name"
+                label="Họ tên"
+                normalize={capitalizeName}
+                validateFirst
+                rules={[...RULES_FORM.required, ...RULES_FORM.personName]}
+              >
                 <Input placeholder="vd: Nguyễn Văn A" />
               </Form.Item>
             </Col>
@@ -556,10 +562,8 @@ export default function UsersAdminPanel() {
                     name="user_name"
                     label="Tên đăng nhập"
                     tooltip="Tự điền theo họ tên (vd: Giang Văn Cốt → cotgv). Sửa được nếu trùng."
-                    rules={[
-                      ...RULES_FORM.required,
-                      { pattern: /^[A-Za-z0-9._@-]+$/, message: 'Không dấu cách/ký tự đặc biệt' },
-                    ]}
+                    validateFirst
+                    rules={[...RULES_FORM.required, ...RULES_FORM.userName]}
                   >
                     <Input autoComplete="off" placeholder="Tự điền khi nhập họ tên" />
                   </Form.Item>
@@ -582,7 +586,8 @@ export default function UsersAdminPanel() {
               <Form.Item
                 name="email"
                 label="Email"
-                rules={[...RULES_FORM.required, { type: 'email', message: 'Email không hợp lệ' }]}
+                validateFirst
+                rules={[...RULES_FORM.required, ...RULES_FORM.email]}
               >
                 <Input placeholder="ten@congty.com" />
               </Form.Item>
@@ -591,7 +596,8 @@ export default function UsersAdminPanel() {
               <Form.Item
                 name="phone_number"
                 label="Số điện thoại"
-                rules={[...RULES_FORM.required, { max: 20, message: 'Tối đa 20 ký tự' }]}
+                validateFirst
+                rules={[...RULES_FORM.required, ...RULES_FORM.phone]}
               >
                 <Input placeholder="vd: 0912345678" />
               </Form.Item>
@@ -610,7 +616,7 @@ export default function UsersAdminPanel() {
               </Form.Item>
             </Col>
             <Col xs={12} md={8}>
-              <Form.Item name="date_of_birth" label="Ngày sinh">
+              <Form.Item name="date_of_birth" label="Ngày sinh" rules={RULES_FORM.birthDate}>
                 <DatePicker format="DD/MM/YYYY" placeholder="dd/mm/yyyy" style={{ width: '100%' }} />
               </Form.Item>
             </Col>
@@ -645,7 +651,7 @@ export default function UsersAdminPanel() {
               </Form.Item>
             </Col>
             <Col span={24}>
-              <Form.Item name="description" label="Ghi chú">
+              <Form.Item name="description" label="Ghi chú" validateFirst rules={[...RULES_FORM.text, maxLen(250)]}>
                 <Input.TextArea autoSize={{ minRows: 2, maxRows: 4 }} placeholder="Ghi chú thêm (không bắt buộc)" />
               </Form.Item>
             </Col>

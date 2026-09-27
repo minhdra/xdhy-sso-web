@@ -3,7 +3,7 @@ import { Alert, App as AntdApp, Button, Form, Input, Modal, Popconfirm, Space, T
 import { useCallback, useEffect, useState } from 'react';
 
 import { deleteOrgRoles, type OrgRole, searchOrgRoles, upsertOrgRole } from '../../api';
-import { RULES_FORM } from '../../validator';
+import { maxLen, RULES_FORM } from '../../validator';
 
 const PAGE_SIZE = 20;
 // Nhóm "Quản trị hệ thống" - chốt chặn admin, không cho xoá/đổi mã.
@@ -192,16 +192,16 @@ export default function RolesAdminPanel() {
             extra={isAdminRole ? 'Mã nhóm quản trị hệ thống không đổi được.' : undefined}
             rules={[
               ...RULES_FORM.required,
-              { pattern: /^[A-Za-z0-9_-]+$/, message: 'Chỉ gồm chữ, số, "_" và "-"' },
-              { max: 50 },
+              ...RULES_FORM.code,
+              maxLen(50),
             ]}
           >
             <Input disabled={isAdminRole} placeholder="vd: KE_TOAN" />
           </Form.Item>
-          <Form.Item name="role_name" label="Tên nhóm" rules={[...RULES_FORM.required, { max: 250 }]}>
+          <Form.Item name="role_name" label="Tên nhóm" validateFirst rules={[...RULES_FORM.required, ...RULES_FORM.text, maxLen(250)]}>
             <Input placeholder="vd: Kế toán" />
           </Form.Item>
-          <Form.Item name="description" label="Mô tả">
+          <Form.Item name="description" label="Mô tả" validateFirst rules={[...RULES_FORM.text, maxLen(250)]}>
             <Input.TextArea autoSize={{ minRows: 2, maxRows: 4 }} placeholder="Nhóm này dành cho ai, làm gì" />
           </Form.Item>
         </Form>

@@ -25,7 +25,7 @@ import {
   uploadBrandingImage,
 } from '../../api';
 import { DEFAULT_LOGO, footerText, useBrandingStore } from '../../store/branding';
-import { RULES_FORM } from '../../validator';
+import { maxLen, RULES_FORM } from '../../validator';
 
 const IMAGES: { kind: BrandingImageKind; label: string; hint: string; accept: string; box: number }[] = [
   { kind: 'logo_light', label: 'Logo (nền sáng)', hint: 'PNG/JPG/WEBP · ≤2MB · nên nền trong suốt, cao ~80px', accept: '.png,.jpg,.jpeg,.webp', box: 56 },
@@ -191,22 +191,22 @@ export default function BrandingAdminPanel() {
       <Form form={form} layout="vertical" onFinish={handleSave}>
         <Row gutter={[16, 4]}>
           <Col xs={24} md={12}>
-            <Form.Item name="org_name" label="Tên tổ chức" rules={[...RULES_FORM.required, { max: 150 }]} tooltip="Hiện ở tiêu đề tab trình duyệt và chân trang.">
+            <Form.Item name="org_name" label="Tên tổ chức" validateFirst rules={[...RULES_FORM.required, ...RULES_FORM.text, maxLen(150)]} tooltip="Hiện ở tiêu đề tab trình duyệt và chân trang.">
               <Input placeholder="vd: Công ty CP Xây dựng ABC" />
             </Form.Item>
           </Col>
           <Col xs={24} md={6}>
-            <Form.Item name="short_name" label="Tên viết tắt" rules={[...RULES_FORM.required, { max: 50 }]}>
+            <Form.Item name="short_name" label="Tên viết tắt" validateFirst rules={[...RULES_FORM.required, ...RULES_FORM.text, maxLen(50)]}>
               <Input placeholder="vd: ABC" />
             </Form.Item>
           </Col>
           <Col xs={24} md={6}>
-            <Form.Item name="app_name" label="Tên ứng dụng" rules={[...RULES_FORM.required, { max: 100 }]}>
+            <Form.Item name="app_name" label="Tên ứng dụng" validateFirst rules={[...RULES_FORM.required, ...RULES_FORM.text, maxLen(100)]}>
               <Input placeholder="vd: Tài khoản" />
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
-            <Form.Item name="tagline" label="Khẩu hiệu" tooltip="Hiện ở chân trang chủ.">
+            <Form.Item name="tagline" validateFirst rules={[...RULES_FORM.text, maxLen(250)]} label="Khẩu hiệu" tooltip="Hiện ở chân trang chủ.">
               <Input placeholder="vd: Một tài khoản cho mọi ứng dụng" maxLength={250} />
             </Form.Item>
           </Col>
@@ -216,17 +216,17 @@ export default function BrandingAdminPanel() {
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
-            <Form.Item name="login_heading" label="Tiêu đề trang đăng nhập" tooltip="Chữ lớn ở cột phải trang đăng nhập (màn rộng).">
+            <Form.Item name="login_heading" validateFirst rules={[...RULES_FORM.text, maxLen(150)]} label="Tiêu đề trang đăng nhập" tooltip="Chữ lớn ở cột phải trang đăng nhập (màn rộng).">
               <Input placeholder="vd: Cổng truy cập chung của doanh nghiệp" maxLength={150} />
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
-            <Form.Item name="footer_text" label="Chân trang" tooltip="Dùng {year} để tự hiện năm hiện tại.">
+            <Form.Item name="footer_text" validateFirst rules={[...RULES_FORM.text, maxLen(250)]} label="Chân trang" tooltip="Dùng {year} để tự hiện năm hiện tại.">
               <Input placeholder="vd: © {year} Công ty ABC. All rights reserved." maxLength={250} />
             </Form.Item>
           </Col>
           <Col span={24}>
-            <Form.Item name="login_description" label="Mô tả trang đăng nhập">
+            <Form.Item name="login_description" validateFirst rules={[...RULES_FORM.text, maxLen(500)]} label="Mô tả trang đăng nhập">
               <Input.TextArea autoSize={{ minRows: 2, maxRows: 4 }} maxLength={500} placeholder="Đoạn giới thiệu ngắn dưới tiêu đề trang đăng nhập" />
             </Form.Item>
           </Col>

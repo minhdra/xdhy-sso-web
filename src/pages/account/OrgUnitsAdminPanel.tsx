@@ -3,7 +3,7 @@ import { Alert, App as AntdApp, Button, Form, Input, Modal, Popconfirm, Segmente
 import { useCallback, useEffect, useState } from 'react';
 
 import { deleteOrgUnits, type OrgUnitKind, type OrgUnitRow, searchOrgUnits, upsertOrgUnit } from '../../api';
-import { RULES_FORM } from '../../validator';
+import { maxLen, RULES_FORM } from '../../validator';
 
 const PAGE_SIZE = 20;
 
@@ -222,23 +222,23 @@ export default function OrgUnitsAdminPanel() {
           <Form.Item name="id" hidden>
             <Input />
           </Form.Item>
-          <Form.Item name="name" label={`Tên ${cfg.label.toLowerCase()}`} rules={[...RULES_FORM.required, { max: 250 }]}>
+          <Form.Item name="name" label={`Tên ${cfg.label.toLowerCase()}`} validateFirst rules={[...RULES_FORM.required, ...RULES_FORM.text, maxLen(250)]}>
             <Input placeholder={`Nhập tên ${cfg.label.toLowerCase()}`} />
           </Form.Item>
           {cfg.contact ? (
             <>
-              <Form.Item name="phone" label="Điện thoại">
-                <Input placeholder="vd: 0221 3xxx xxx" />
+              <Form.Item name="phone" label="Điện thoại" rules={RULES_FORM.landline}>
+                <Input placeholder="vd: 0221 3861 234" />
               </Form.Item>
-              <Form.Item name="fax" label="Fax">
+              <Form.Item name="fax" label="Fax" rules={RULES_FORM.landline}>
                 <Input placeholder="Số fax (nếu có)" />
               </Form.Item>
-              <Form.Item name="address" label="Địa chỉ">
+              <Form.Item name="address" label="Địa chỉ" validateFirst rules={[...RULES_FORM.text, maxLen(250)]}>
                 <Input placeholder="Số nhà, đường, phường/xã, tỉnh/thành" />
               </Form.Item>
             </>
           ) : (
-            <Form.Item name="description" label="Mô tả">
+            <Form.Item name="description" label="Mô tả" validateFirst rules={[...RULES_FORM.text, maxLen(500)]}>
               <Input.TextArea autoSize={{ minRows: 2, maxRows: 4 }} placeholder="Nhiệm vụ, phạm vi của chức vụ" />
             </Form.Item>
           )}

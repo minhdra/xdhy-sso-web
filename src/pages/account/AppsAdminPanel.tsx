@@ -3,7 +3,7 @@ import { Alert, App as AntdApp, Avatar, Button, Checkbox, Empty, Form, Input, In
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { addAppAccessRequest, avatarSrc, deleteAppRequest, getAdminApps, getAdminUsers, getAppAccessRequest, removeAppAccessRequest, uploadAppIconRequest, upsertAppRequest, type AdminApp, type AdminUser } from '../../api';
-import { RULES_FORM } from '../../validator';
+import { maxLen, RULES_FORM } from '../../validator';
 import { resizeImage } from '../../imageResize';
 import { avatarColor } from '../../avatarColor';
 
@@ -196,9 +196,9 @@ export default function AppsAdminPanel() {
       <Form form={appForm} layout="vertical" onFinish={handleSaveApp}>
         <Form.Item name="app_id" hidden><Input /></Form.Item>
         <Form.Item name="app_key" label="Mã ứng dụng" rules={[...RULES_FORM.required, { pattern: /^[a-z0-9-]+$/, message: 'Chỉ chữ thường, số và dấu gạch ngang (vd: build-web)' }]}><Input placeholder="vd: chat" /></Form.Item>
-        <Form.Item name="app_name" label="Tên hiển thị" rules={RULES_FORM.required}><Input placeholder="vd: Trò chuyện" /></Form.Item>
-        <Form.Item name="description" label="Mô tả ngắn"><Input placeholder="Hiện dưới tên ở trang chủ" /></Form.Item>
-        <Form.Item name="url" label="URL" rules={[{ type: 'url', message: 'URL không hợp lệ' }]}><Input placeholder="https://..." /></Form.Item>
+        <Form.Item name="app_name" label="Tên hiển thị" validateFirst rules={[...RULES_FORM.required, ...RULES_FORM.text, maxLen(100)]}><Input placeholder="vd: Trò chuyện" /></Form.Item>
+        <Form.Item name="description" label="Mô tả ngắn" validateFirst rules={[...RULES_FORM.text, maxLen(250)]}><Input placeholder="Hiện dưới tên ở trang chủ" /></Form.Item>
+        <Form.Item name="url" label="URL" rules={[{ pattern: /^https?:\/\/\S+$/, message: 'URL bắt đầu bằng http:// hoặc https://' }, maxLen(500)]}><Input placeholder="https://..." /></Form.Item>
         <Form.Item label="Ảnh icon">
           <Space>
             {iconPreview && <img src={iconPreview} alt="Icon đã chọn" width={46} height={46} style={{ objectFit: 'contain' }} />}

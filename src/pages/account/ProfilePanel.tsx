@@ -20,7 +20,7 @@ import {
   type AccountProfile,
 } from '../../api';
 import { useSessionStore } from '../../store/session';
-import { RULES_FORM } from '../../validator';
+import { capitalizeName, RULES_FORM } from '../../validator';
 import { resizeImage } from '../../imageResize';
 import { avatarColor } from '../../avatarColor';
 
@@ -197,8 +197,10 @@ export default function ProfilePanel() {
       >
         <Form.Item
           name='full_name'
+          normalize={capitalizeName}
+          validateFirst
           label='Họ và tên'
-          rules={RULES_FORM.required}
+          rules={[...RULES_FORM.required, ...RULES_FORM.personName]}
         >
           <Input size='large' placeholder='Nhập họ và tên' />
         </Form.Item>
@@ -228,7 +230,7 @@ export default function ProfilePanel() {
             ]}
           />
         </Form.Item>
-        <Form.Item name='date_of_birth' label='Ngày sinh'>
+        <Form.Item name='date_of_birth' label='Ngày sinh' rules={RULES_FORM.birthDate}>
           <DatePicker
             size='large'
             format='DD/MM/YYYY'
