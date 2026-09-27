@@ -66,6 +66,24 @@ interface UserFormValues {
 }
 
 const PAGE_SIZE = 20;
+// Khớp api-sso orgService DEFAULT_NEW_PASSWORD.
+const DEFAULT_PASSWORD = '123456';
+
+// Tên đăng nhập gợi ý từ họ tên: tên + chữ cái đầu họ và tên đệm, bỏ dấu, viết
+// thường. "Giang Văn Cốt" -> "cotgv", "Nguyễn Thị Mai Chi" -> "chintm".
+export const suggestUserName = (fullName: string): string => {
+  const parts = fullName
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter(Boolean);
+  if (!parts.length) return '';
+  const last = parts[parts.length - 1];
+  return last + parts.slice(0, -1).map((p) => p[0]).join('');
+};
 
 // Quản lý người dùng (chuyển từ build-web "Quản trị hệ thống > Người dùng").
 // Thay đổi được api-sso đồng bộ sang tài chính/công việc/chat/meeting.
@@ -88,6 +106,8 @@ export default function UsersAdminPanel() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [formName, setFormName] = useState('');
+  // Admin đã tự sửa tên đăng nhập -> thôi tự điền theo họ tên.
+  const [userNameTouched, setUserNameTouched] = useState(false);
   const [options, setOptions] = useState<Record<'branches' | 'departments' | 'positions' | 'roles', DropdownItem[]>>({
     branches: [],
     departments: [],
@@ -144,6 +164,7 @@ export default function UsersAdminPanel() {
     setAvatarFile(null);
     setAvatarPreview(null);
     setFormName('');
+    setUserNameTouched(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editing]);
 
@@ -226,7 +247,17 @@ export default function UsersAdminPanel() {
       }
       const userId = editing === 'new' ? (res.data as unknown as { user_id: string }).user_id : (editing as string);
       const avatarOk = await uploadAvatar(userId);
-      if (avatarOk) notification.success({ message: res.data.message || 'Đã lưu người dùng.' });
+      const defaultPassword =
+        editing === 'new' ? (res.data as unknown as { default_password?: string | null }).default_password : null;
+      if (avatarOk && defaultPassword) {
+        notification.success({
+          message: res.data.message || 'Đã thêm người dùng.',
+          description: `Tên đăng nhập: ${values.user_name?.trim()} · Mật khẩu ban đầu: ${defaultPassword}`,
+          duration: 10,
+        });
+      } else if (avatarOk) {
+        notification.success({ message: res.data.message || 'Đã lưu người dùng.' });
+      }
       setEditing(null);
       void load();
     } catch {
@@ -481,7 +512,13 @@ export default function UsersAdminPanel() {
           onFinish={handleSave}
           disabled={loadingDetail}
           onValuesChange={(changed) => {
-            if ('full_name' in changed) setFormName(changed.full_name ?? '');
+            if ('full_name' in changed) {
+              setFormName(changed.full_name ?? '');
+              if (editing === 'new' && !userNameTouched) {
+                form.setFieldValue('user_name', suggestUserName(changed.full_name ?? ''));
+              }
+            }
+            if ('user_name' in changed) setUserNameTouched(true);
           }}
         >
           <Space size={16} align="center" className="ssoOrg-avatarRow">
@@ -507,36 +544,40 @@ export default function UsersAdminPanel() {
             </div>
           </Space>
           <Row gutter={[16, 4]}>
+            <Col xs={24} md={12}>
+              <Form.Item name="full_name" label="Họ tên" rules={[...RULES_FORM.required, { max: 60 }]}>
+                <Input placeholder="vd: Nguyễn Văn A" />
+              </Form.Item>
+            </Col>
             {isNew && (
               <>
                 <Col xs={24} md={12}>
                   <Form.Item
                     name="user_name"
                     label="Tên đăng nhập"
+                    tooltip="Tự điền theo họ tên (vd: Giang Văn Cốt → cotgv). Sửa được nếu trùng."
                     rules={[
                       ...RULES_FORM.required,
                       { pattern: /^[A-Za-z0-9._@-]+$/, message: 'Không dấu cách/ký tự đặc biệt' },
                     ]}
                   >
-                    <Input autoComplete="off" placeholder="vd: nguyenvana" />
+                    <Input autoComplete="off" placeholder="Tự điền khi nhập họ tên" />
                   </Form.Item>
                 </Col>
                 <Col xs={24} md={12}>
-                  <Form.Item
-                    name="password"
-                    label="Mật khẩu"
-                    rules={[...RULES_FORM.required, { min: 6, message: 'Tối thiểu 6 ký tự' }]}
-                  >
-                    <Input.Password autoComplete="new-password" placeholder="Tối thiểu 6 ký tự" />
-                  </Form.Item>
+                  <Alert
+                    type="info"
+                    showIcon
+                    style={{ marginTop: 30 }}
+                    message={
+                      <>
+                        Mật khẩu ban đầu: <Typography.Text code>{DEFAULT_PASSWORD}</Typography.Text> — nhắc người dùng đổi sau khi đăng nhập.
+                      </>
+                    }
+                  />
                 </Col>
               </>
             )}
-            <Col xs={24} md={12}>
-              <Form.Item name="full_name" label="Họ tên" rules={[...RULES_FORM.required, { max: 60 }]}>
-                <Input placeholder="vd: Nguyễn Văn A" />
-              </Form.Item>
-            </Col>
             <Col xs={24} md={12}>
               <Form.Item
                 name="email"
