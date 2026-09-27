@@ -547,7 +547,11 @@ export default function UsersAdminPanel() {
               </Form.Item>
             </Col>
             <Col xs={24} md={8}>
-              <Form.Item name="phone_number" label="Số điện thoại">
+              <Form.Item
+                name="phone_number"
+                label="Số điện thoại"
+                rules={[...RULES_FORM.required, { max: 20, message: 'Tối đa 20 ký tự' }]}
+              >
                 <Input placeholder="vd: 0912345678" />
               </Form.Item>
             </Col>
