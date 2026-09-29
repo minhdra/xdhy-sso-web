@@ -26,16 +26,26 @@ const brandingMeta = (env: Record<string, string>): Plugin => {
       `Cổng đăng nhập một lần (SSO) của ${orgName} — đăng nhập một lần, dùng chung cho mọi ứng dụng nội bộ.`,
   };
   const escape = (v: string) =>
-    v.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    v
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
   return {
     name: 'branding-meta',
-    transformIndexHtml: (html) => html.replace(/\{\{([A-Z_]+)\}\}/g, (m, key: string) => (key in values ? escape(values[key]) : m)),
+    transformIndexHtml: (html) =>
+      html.replace(/\{\{([A-Z_]+)\}\}/g, (m, key: string) =>
+        key in values ? escape(values[key]) : m,
+      ),
     // Bản sao index.html cho api-sso làm khuôn render meta từ DB
     // (GET /api-sso/render-page, env SSO_WEB_TEMPLATE_URL) - không bị route
     // SPA/nginx render đè vì là file thật.
     writeBundle(options) {
       if (!options.dir) return;
-      copyFileSync(join(options.dir, 'index.html'), join(options.dir, 'index.template.html'));
+      copyFileSync(
+        join(options.dir, 'index.html'),
+        join(options.dir, 'index.template.html'),
+      );
     },
   };
 };
@@ -83,9 +93,9 @@ export default defineConfig(({ mode }) => {
           // deploy - trước đây gộp hết vào 1 chunk 800KB+, đổi 1 dòng code
           // app là toàn bộ vendor phải tải lại.
           manualChunks: {
-            "vendor-react": ["react", "react-dom", "react-router-dom"],
-            "vendor-antd": ["antd", "@ant-design/icons"],
-            "vendor-utils": ["dayjs", "zustand"],
+            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+            'vendor-antd': ['antd', '@ant-design/icons'],
+            'vendor-utils': ['dayjs', 'zustand'],
           },
         },
       },
@@ -96,6 +106,7 @@ export default defineConfig(({ mode }) => {
         '/api': {
           target: 'http://localhost:6005',
           changeOrigin: true,
+          rewrite: (p) => p.replace(/^\/api/, ''),
         },
       },
     },
