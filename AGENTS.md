@@ -4,6 +4,21 @@ Quy tắc cho AI agent (bất kỳ công cụ nào) làm việc trong `sso-web`.
 và đơn giản hơn `build-web`/`task-web` (không react-query, không bảng dữ liệu lớn), đừng mang nguyên
 pattern của 2 app kia sang đây mà không kiểm tra trước.
 
+## Build theo môi trường + nhánh (01/10/2026) — BẮT BUỘC
+
+| Nhánh | Môi trường | Lệnh build | `dist/` |
+| --- | --- | --- | --- |
+| `dev` | server dev (`dev.xdhy.vn`, `congtrinh`, `congviec`…) | `pnpm build:dev` (mode `staging` → `.env.staging`) | **commit** — CI nhánh `dev` chỉ robocopy `dist` |
+| `main` | production (`xdhy.vn`, `fico`, `taka`…) | `pnpm build` (mode `production` → `.env.production`) | **không commit** — `dist/` nằm trong `.gitignore` của `main`, người deploy production tự build |
+
+- `.env.production`/`.env.staging` **được commit** (chỉ có biến `VITE_*` công khai) và ưu tiên hơn `.env` trên máy,
+  nên build không còn phụ thuộc `.env` cá nhân. Đổi domain → sửa 2 file này, không sửa `index.html`/src.
+- **Commit dist ở nhánh `dev` phải build bằng `pnpm build:dev`.** Dùng `pnpm build` thì dist trên server dev
+  trỏ SSO production. Kiểm tra trước khi commit: `grep -c 'https://dev.xdhy.vn' dist/assets/*.js` > 0
+  (sso-web: `grep dev.xdhy.vn dist/index.html`).
+- Merge `dev` → `main`: `dist/` ở `main` đã bị xoá khỏi git nên sẽ conflict modify/delete — giải bằng
+  `git rm -r --cached dist` rồi commit merge, **không** đưa `dist/` lại vào `main`.
+
 ## Trước khi đoán — đọc, đừng suy đoán
 
 - **Không dùng `@tanstack/react-query`/`axios`/layer `loader`** như `build-web`/`task-web` — mọi API gọi

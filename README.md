@@ -74,8 +74,9 @@ docker compose -f ../docker-compose.real.yml up -d --build sso-web
 
 `dist/` **được commit vào repo** (không còn trong `.gitignore`), CI không build và server **không cần Node/npm**:
 
-1. Dev: `pnpm build` → `git add dist` → commit → push nhánh `dev`. **Quên build = deploy bản cũ.**
-   Biến `VITE_*` trong `.env` được nướng vào `dist` lúc build - đổi `.env` phải build lại.
+1. Dev: `pnpm build:dev` (domain server dev, `.env.staging`) → `git add dist` → commit → push nhánh `dev`.
+   **Quên build = deploy bản cũ.** Nhánh `main` (production) không commit `dist` - build bằng `pnpm build`
+   (`.env.production`). Xem mục "Build theo môi trường" trong [`AGENTS.md`](./AGENTS.md).
 2. GitLab runner (Windows, tag `dev`) chạy job `deploy-server` trong [`.gitlab-ci.yml`](./.gitlab-ci.yml):
    `robocopy /MIR` thư mục `dist/` vào `C:\inetpub\wwwroot\XayDung\sso-web` (xoá file cũ không còn trong dist).
 3. IIS tự phục vụ file tĩnh, không có process nào để kill/chạy lại.
