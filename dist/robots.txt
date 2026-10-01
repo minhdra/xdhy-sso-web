@@ -1,3 +1,0 @@
-# Cổng đăng nhập nội bộ - không cho bot lập chỉ mục.
-User-agent: *
-Disallow: /
