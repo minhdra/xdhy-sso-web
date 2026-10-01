@@ -5,7 +5,3 @@ node_modules
 .env
 .env.local
 .env.*.local
-
-# Nhánh main (production) không commit dist - build tại chỗ khi deploy.
-# Nhánh dev vẫn commit dist cho CI server dev.
-/dist
