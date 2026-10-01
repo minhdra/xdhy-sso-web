@@ -1,0 +1,45 @@
+stages:
+  - dev
+
+# dist/ được build sẵn ở máy dev và commit vào repo -> job chỉ chép file tĩnh vào thư mục site IIS.
+# Không cần Node/npm trên server, không có process nào để kill/chạy (IIS tự phục vụ file tĩnh).
+# Lưu ý: biến VITE_* (.env) được "nướng" vào dist lúc build -> đổi .env phải build lại + commit dist.
+# Runner: Windows server (IIS host), shell executor = PowerShell.
+#
+# web.config của site (SPA fallback + proxy /api) nằm ở DEPLOY_DIR, KHÔNG có trong dist -> job giữ nguyên,
+# không xoá/ghi đè.
+#
+# Script giữ ASCII (không dấu) để tránh lỗi encoding khi runner ghi file .ps1.
+deploy-server:
+  stage: dev
+  tags:
+    - dev
+  resource_group: production
+  variables:
+    DEPLOY_DIR: 'C:\inetpub\wwwroot\XayDung\sso-web'
+  script:
+    - |
+      $ErrorActionPreference = 'Stop'
+      $src = "$env:CI_PROJECT_DIR\dist"
+      $dst = $env:DEPLOY_DIR
+
+      function Fail($msg) { Write-Host "ERROR: $msg"; exit 1 }
+
+      if (-not (Test-Path "$src\index.html")) { Fail 'Khong co dist\index.html trong repo. Chay pnpm build roi commit ca thu muc dist.' }
+      if (-not (Test-Path $dst)) { Fail "Khong thay thu muc site $dst - tao site IIS + thu muc truoc." }
+      if (-not (Test-Path "$dst\web.config")) { Write-Host "WARNING: $dst\web.config khong ton tai - SPA fallback va proxy /api se khong hoat dong." }
+
+      Write-Host "Deploy $src -> $dst"
+
+      # /MIR: xoa file cu khong con trong dist (asset co hash doi ten moi lan build).
+      # /XF web.config: giu nguyen web.config cua site (khong chep, khong xoa). robocopy exit code < 8 la OK.
+      robocopy $src $dst /MIR /XF web.config /NFL /NDL /NJH /NP
+      if ($LASTEXITCODE -ge 8) { Fail "robocopy loi (exit $LASTEXITCODE)" }
+      $global:LASTEXITCODE = 0
+
+      $ver = Get-Content "$dst\version.json" -Raw | ConvertFrom-Json
+      Write-Host "OK: da deploy, buildId $($ver.buildId)"
+  environment:
+    name: production
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "dev"'

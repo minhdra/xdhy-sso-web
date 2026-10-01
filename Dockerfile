@@ -1,0 +1,43 @@
+FROM node:22-alpine AS build-stage
+WORKDIR /app
+COPY package.json pnpm-lock.yaml* ./
+RUN npm i -g pnpm@10
+RUN pnpm i --no-frozen-lockfile
+COPY . .
+
+# Domain cha dùng chung, cho phép redirect sau login về app khác cùng domain
+# (build-web...) - rỗng thì chỉ nhận redirect dạng path nội bộ. Phải khai ARG
+# rồi promote sang ENV mới có mặt lúc build (đã gặp lỗi thật y hệt ở
+# build-web/Dockerfile khi quên bước này).
+ARG VITE_ALLOWED_REDIRECT_SUFFIX
+ENV VITE_ALLOWED_REDIRECT_SUFFIX=$VITE_ALLOWED_REDIRECT_SUFFIX
+# Base path axios/fetch dùng - giống hệt build-web/task-web (xem
+# build-web/Dockerfile). nginx của sso-web tự proxy /api same-origin sang
+# gateway (xem config/default.conf) - tránh CORS + Safari chặn cookie
+# cross-origin.
+ARG VITE_BASE_URL
+ENV VITE_BASE_URL=$VITE_BASE_URL
+# Domain cha dùng chung - khi bấm toggle sáng/tối, ghi cookie theme_mode ở
+# domain này để đồng bộ theme với build-web (và ngược lại). Rỗng -> cookie
+# host-only, toggle vẫn chạy nhưng không lan sang app khác.
+ARG VITE_COOKIE_DOMAIN
+ENV VITE_COOKIE_DOMAIN=$VITE_COOKIE_DOMAIN
+# Thẻ meta/Open Graph tĩnh trong index.html (vite.config.ts brandingMeta) -
+# rỗng = giá trị mặc định (An Trường Phát Hưng Yên / xdhy.vn). Mỗi công ty truyền
+# bộ riêng. Tên/logo hiển thị trong app thì đổi ở tab Thương hiệu (DB).
+ARG VITE_ORG_NAME
+ARG VITE_SHORT_NAME
+ARG VITE_APP_NAME
+ARG VITE_SITE_URL
+ARG VITE_THEME_COLOR
+ARG VITE_OG_IMAGE
+ARG VITE_DESCRIPTION
+ENV VITE_ORG_NAME=$VITE_ORG_NAME VITE_SHORT_NAME=$VITE_SHORT_NAME VITE_APP_NAME=$VITE_APP_NAME \
+    VITE_SITE_URL=$VITE_SITE_URL VITE_THEME_COLOR=$VITE_THEME_COLOR VITE_OG_IMAGE=$VITE_OG_IMAGE \
+    VITE_DESCRIPTION=$VITE_DESCRIPTION
+RUN pnpm run build
+
+FROM nginx:1.27-alpine AS production-stage
+COPY --from=build-stage /app/dist /usr/share/nginx/html
+COPY config/default.conf /etc/nginx/conf.d/default.conf
+CMD ["nginx", "-g", "daemon off;"]

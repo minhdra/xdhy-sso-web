@@ -1,93 +1,95 @@
 # sso-web
 
+Frontend cổng đăng nhập tập trung (SSO) cho hệ thống XDHY — trang đăng nhập/quên mật khẩu dùng chung,
+trang chủ liệt kê ứng dụng người dùng được cấp quyền, và trang "Quản lý tài khoản" (hồ sơ/mật khẩu/
+phiên đăng nhập). Build bằng **React + Vite + Ant Design**, là 1 app **độc lập** (origin/port riêng),
+không phục vụ qua `api-gateway` như phần API.
 
+## Stack
 
-## Getting started
+- React 18 + TypeScript
+- Vite (build/dev server), SWC
+- Ant Design 5 (`antd`, `@ant-design/icons`)
+- Zustand (state)
+- react-router-dom
+- lottie-web (animation loading/minh hoạ)
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Yêu cầu
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+- Node.js >= 18
+- pnpm
 
-## Add your files
+## Cài đặt
 
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
-
+```bash
+pnpm install
+cp .env.example .env   # rồi điền giá trị thật, xem giải thích từng biến trong chính file .env.example
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/build9135232/sso-web.git
-git branch -M main
-git push -uf origin main
+
+`sso-web` gọi API **same-origin**, giống hệt `build-web`/`task-web`: production nginx của chính nó
+(`config/default.conf`) proxy `/api/*` sang `api-gateway`, dev vite `server.proxy` (`vite.config.ts`)
+proxy tương tự — cả 2 đều dùng `VITE_BASE_URL=/api` (path tương đối), không cần CORS (xem
+[`docs/architecture.md`](./docs/architecture.md)). Chạy được đủ cả cụm hệ thống ở local — xem
+[`api-sso/docs/local_dev.md`](../api-sso/docs/local_dev.md).
+
+## Chạy dev
+
+```bash
+pnpm dev
 ```
 
-## Integrate with your tools
+Mặc định chạy ở `http://localhost:5173`, proxy `/api` sang `http://localhost:6688` (sửa target trong
+`vite.config.ts` nếu gateway local chạy port khác).
 
-* [Set up project integrations](https://gitlab.com/build9135232/sso-web/-/settings/integrations)
+## Build
 
-## Collaborate with your team
+```bash
+pnpm build
+```
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+## Typecheck
 
-## Test and Deploy
+```bash
+pnpm typecheck
+```
 
-Use the built-in continuous integration in GitLab.
+Không có eslint/prettier riêng cho service này — chỉ `tsc` kiểm tra kiểu.
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+## Thu phóng chữ
 
-***
+- Chế độ `standard`/`large` dùng chung cookie `xdhy_font_size` với `task-web`.
+- CSS nội bộ khai báo cỡ chữ bằng `rem`; chế độ `large` tăng `font-size` gốc theo cùng tỷ lệ `16/13`
+  với token Ant Design. Không dùng `font-size: ...px` hoặc `fontSize` dạng số trong component mới vì
+  các giá trị đó không phản ứng theo chế độ chữ lớn.
 
-# Editing this README
+## Docker
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+Không có `docker-compose.yml` riêng cho service này — chạy cùng cụm ở gốc repo:
 
-## Suggestions for a good README
+```bash
+docker compose -f ../docker-compose.real.yml up -d --build sso-web
+```
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+## Deploy (Windows / IIS host, GitLab CI)
 
-## Name
-Choose a self-explaining name for your project.
+`dist/` **được commit vào repo** (không còn trong `.gitignore`), CI không build và server **không cần Node/npm**:
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+1. Dev: `pnpm build:dev` (domain server dev, `.env.staging`) → `git add dist` → commit → push nhánh `dev`.
+   **Quên build = deploy bản cũ.** Nhánh `main` (production) không commit `dist` - build bằng `pnpm build`
+   (`.env.production`). Xem mục "Build theo môi trường" trong [`AGENTS.md`](./AGENTS.md).
+2. GitLab runner (Windows, tag `dev`) chạy job `deploy-server` trong [`.gitlab-ci.yml`](./.gitlab-ci.yml):
+   `robocopy /MIR` thư mục `dist/` vào `C:\inetpub\wwwroot\XayDung\sso-web` (xoá file cũ không còn trong dist).
+3. IIS tự phục vụ file tĩnh, không có process nào để kill/chạy lại.
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+`web.config` của site (SPA fallback + proxy `/api`) phải có sẵn ở thư mục đích; job giữ nguyên, không ghi đè.
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+## Tài liệu dự án
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+- [`docs/architecture.md`](./docs/architecture.md) — Kiến trúc, vị trí trong hệ thống, cấu trúc `src/`
+- [`docs/api.md`](./docs/api.md) — API mà FE gọi (đăng nhập, hồ sơ, danh sách app, quản trị app)
+- [`docs/database.md`](./docs/database.md) — Vì sao không có DB riêng, trỏ sang doc schema backend
+  (`api-sso/docs/database.md`)
+- [`docs/technical_decisions.md`](./docs/technical_decisions.md) — Quyết định kỹ thuật + lý do (vì sao
+  app độc lập không phục vụ qua gateway, cookie domain cha, phân quyền ứng dụng theo người...)
+- [`../api-sso/docs/local_dev.md`](../api-sso/docs/local_dev.md) — Chạy cả cụm hệ thống (7 service) ở
+  môi trường local, không chỉ riêng `sso-web`

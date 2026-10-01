@@ -1,0 +1,7 @@
+node_modules
+# dist  <- KHÔNG ignore: dist được commit để CI/CD deploy thẳng (xem .gitlab-ci.yml)
+.DS_Store
+
+.env
+.env.local
+.env.*.local
