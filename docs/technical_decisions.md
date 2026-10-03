@@ -123,3 +123,10 @@ API trả 409 `DELETED_USER_EXISTS` → hộp chọn **Khôi phục tài khoản
 tài chính, tài khoản chat quay lại; chat/meeting upsert theo `id` và có unique email/SĐT nên cùng người
 phải khôi phục) hoặc **Tạo tài khoản mới** (người khác). Cảnh báo khi email/SĐT trùng tài khoản cũ.
 Xem `api-sso/docs/api.md` `POST /admin/org/users`.
+
+## Không ép `transition-duration` trong `prefers-reduced-motion` (04/10/2026)
+
+Khối reduced-motion từng ép `transition-duration: 1ms !important` cho mọi phần tử. Trên Remote Desktop (RDP tắt
+animation → Chrome báo `prefers-reduced-motion: reduce`) mọi popup antd (Select/Dropdown…) mở ra ở toạ độ âm hàng
+nghìn px — `@rc-component/trigger` đo vị trí giữa lúc transition mở. Đã bỏ dòng đó (animation vẫn 1ms). Kiểm
+tra bằng Playwright `reducedMotion: 'reduce'` và đo `style.inset` của `.ant-select-dropdown`.
