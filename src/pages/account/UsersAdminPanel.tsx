@@ -33,6 +33,7 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   avatarSrc,
   createOrgUser,
+  type DeletedUserConflict,
   deleteOrgUsers,
   type DropdownItem,
   getOrgRoleDropdown,
@@ -226,7 +227,63 @@ export default function UsersAdminPanel() {
     }
   };
 
-  const handleSave = async (values: UserFormValues) => {
+  // 409 DELETED_USER_EXISTS: tên đăng nhập trùng tài khoản đã xoá -> hỏi admin.
+  // Khôi phục giữ user_id (lịch sử công việc/tài chính, tài khoản chat... quay
+  // lại); tạo mới thì là người khác hoàn toàn. Trả null nếu admin huỷ.
+  const askDeletedUserAction = (conflict: DeletedUserConflict, values: UserFormValues) =>
+    new Promise<'restore' | 'new' | null>((resolve) => {
+      const old = conflict.deleted_user;
+      const sameContact =
+        (old.email && old.email.trim().toLowerCase() === values.email.trim().toLowerCase()) ||
+        (old.phone_number && old.phone_number.trim() === (values.phone_number ?? '').trim());
+      const instance = modal.confirm({
+        title: `Tên đăng nhập "${old.user_name}" thuộc một tài khoản đã xoá`,
+        width: 520,
+        content: (
+          <div className="ssoOrg-restoreInfo">
+            <p>
+              <b>{old.full_name || old.user_name}</b>
+              {old.email ? ` · ${old.email}` : ''}
+              {old.phone_number ? ` · ${old.phone_number}` : ''}
+              {old.deleted_at ? ` — xoá ngày ${new Date(old.deleted_at).toLocaleDateString('vi-VN')}` : ''}
+            </p>
+            <p>
+              <b>Khôi phục</b>: bật lại đúng tài khoản cũ (giữ lịch sử công việc, tài chính, trò chuyện) và cập nhật
+              theo thông tin vừa nhập. Quyền truy cập ứng dụng cần cấp lại.
+            </p>
+            <p>
+              <b>Tạo tài khoản mới</b>: một người khác, không liên quan lịch sử của tài khoản cũ.
+              {sameContact && (
+                <Typography.Text type="warning">
+                  {' '}
+                  Email/số điện thoại đang trùng tài khoản cũ — nếu là cùng một người, nên chọn Khôi phục.
+                </Typography.Text>
+              )}
+            </p>
+          </div>
+        ),
+        okText: 'Khôi phục tài khoản cũ',
+        cancelText: 'Huỷ',
+        onOk: () => resolve('restore'),
+        onCancel: () => resolve(null),
+        footer: (_, { OkBtn, CancelBtn }) => (
+          <>
+            <CancelBtn />
+            <Button
+              onClick={() => {
+                resolve('new');
+                instance.destroy();
+              }}
+            >
+              Tạo tài khoản mới
+            </Button>
+            <OkBtn />
+          </>
+        ),
+      });
+    });
+
+  const handleSave = async (values: UserFormValues, deletedUserAction?: 'restore' | 'new') => {
     setSaving(true);
     try {
       const payload = {
@@ -239,8 +296,19 @@ export default function UsersAdminPanel() {
       };
       const res =
         editing === 'new'
-          ? await createOrgUser({ ...payload, user_name: values.user_name?.trim() })
+          ? await createOrgUser({
+              ...payload,
+              user_name: values.user_name?.trim(),
+              deleted_user_action: deletedUserAction,
+            })
           : await updateOrgUser({ ...payload, user_id: editing as string });
+      const conflict = (res.data as { data?: DeletedUserConflict }).data;
+      if (res.status === 409 && conflict?.code === 'DELETED_USER_EXISTS') {
+        setSaving(false);
+        const action = await askDeletedUserAction(conflict, values);
+        if (action) await handleSave(values, action);
+        return;
+      }
       if (!res.ok) {
         notification.error({ message: res.data.message || 'Không lưu được người dùng.' });
         return;
@@ -383,7 +451,11 @@ export default function UsersAdminPanel() {
         size="small"
         loading={loading}
         dataSource={rows}
-        scroll={{ x: 640 }}
+        // Tổng cột = khung panel (~686px): không cuộn ngang ở desktop. Cột
+        // "Người dùng" rộng nhất để họ tên ít xuống dòng; chữ dài ở các cột
+        // khác tự xuống dòng (ssoOrg-cell--wrap) thay vì bị che.
+        tableLayout="fixed"
+        scroll={{ x: 684 }}
         pagination={{
           current: page,
           pageSize: PAGE_SIZE,
@@ -396,9 +468,10 @@ export default function UsersAdminPanel() {
           {
             title: 'Người dùng',
             key: 'user',
-            ellipsis: true,
+            // Đủ rộng cho họ tên + @tài khoản trên 1 dòng ở desktop.
+            width: 210,
             render: (_, u) => (
-              <Space size={10}>
+              <div className="ssoOrg-identity">
                 <Avatar
                   shape="square"
                   size={32}
@@ -407,23 +480,27 @@ export default function UsersAdminPanel() {
                 >
                   {u.full_name?.trim().charAt(0).toUpperCase()}
                 </Avatar>
-                <div className="ssoOrg-cell">
-                  <span title={u.full_name}>
-                    {u.online_flag === 1 && <Tag color="error">Đã khoá</Tag>}
+                <div className="ssoOrg-cell ssoOrg-cell--wrap">
+                  <span>
                     {u.full_name}
+                    {u.online_flag === 1 && (
+                      <Tag color="error" className="ssoOrg-lockTag">
+                        Đã khoá
+                      </Tag>
+                    )}
                   </span>
                   <small>@{u.user_name}</small>
                 </div>
-              </Space>
+              </div>
             ),
           },
           {
             title: 'Liên hệ',
             key: 'contact',
-            width: 190,
+            width: 150,
             responsive: ['md'],
             render: (_, u) => (
-              <div className="ssoOrg-cell" title={u.email ?? undefined}>
+              <div className="ssoOrg-cell ssoOrg-cell--wrap">
                 <span>{u.email}</span>
                 <small>{u.phone_number}</small>
               </div>
@@ -432,10 +509,10 @@ export default function UsersAdminPanel() {
           {
             title: 'Chức vụ / Phòng ban',
             key: 'org',
-            width: 170,
+            width: 180,
             responsive: ['lg'],
             render: (_, u) => (
-              <div className="ssoOrg-cell" title={[u.position_name, u.department_name, u.branch_name].filter(Boolean).join(' · ')}>
+              <div className="ssoOrg-cell ssoOrg-cell--wrap">
                 <span>{u.position_name}</span>
                 <small>
                   {[u.department_name, u.branch_name].filter(Boolean).join(' · ')}
@@ -443,11 +520,11 @@ export default function UsersAdminPanel() {
               </div>
             ),
           },
-          { title: 'Nhóm quyền', dataIndex: 'role_group', width: 150, responsive: ['xxl'], ellipsis: true },
           {
             title: '',
             key: 'actions',
-            width: 150,
+            // 4 nút icon 32px + padding ô 16px.
+            width: 144,
             render: (_, u) => {
               const self = u.user_id === me?.user_id;
               return (
@@ -509,7 +586,7 @@ export default function UsersAdminPanel() {
         <Form
           form={form}
           layout="vertical"
-          onFinish={handleSave}
+          onFinish={(values) => handleSave(values)}
           disabled={loadingDetail}
           onValuesChange={(changed) => {
             if ('full_name' in changed) {

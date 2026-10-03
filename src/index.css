@@ -1264,10 +1264,21 @@ textarea::placeholder,
   max-height: calc(100dvh - 144px);
   overflow: hidden;
 }
+/* Body modal chỉ cuộn DỌC (04/10/2026):
+   - overflow-y: auto kéo overflow-x thành auto -> margin âm của <Row gutter>
+     sinh thanh cuộn ngang. Chặn hẳn overflow-x.
+   - scrollbar-gutter: stable giữ sẵn chỗ thanh cuộn: trên Windows thanh cuộn
+     chiếm bề rộng, bật/tắt làm form hẹp lại -> cột wrap khác -> cao/thấp đổi ->
+     thanh cuộn lại tắt/bật = "nháy" khi gõ (macOS thanh cuộn nổi nên không gặp).
+   - padding/margin 4px: chừa chỗ viền focus của input sát mép không bị cắt. */
 .ant-modal-body {
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  padding-inline: 4px;
+  margin-inline: -4px;
 }
 
 @media (max-width: 620px) {
@@ -1331,6 +1342,30 @@ body {
 .ssoOrg-cell > small {
   color: var(--color-text-secondary);
   font-size: 0.75rem;
+}
+/* Bảng người dùng (04/10/2026): cho xuống dòng thay vì cắt - tên dài, email,
+   phòng ban đều đọc đủ. Avatar + chữ dùng flex có min-width 0 (antd Space không
+   co được nên trước đây chữ bị che cụt, không hiện "..."). */
+.ssoOrg-identity {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.ssoOrg-cell--wrap > span,
+.ssoOrg-cell--wrap > small {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.ssoOrg-cell--wrap {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.ssoOrg-restoreInfo p {
+  margin: 0 0 8px;
+}
+.ssoOrg-lockTag {
+  margin-inline: 6px 0;
 }
 
 /* Tab Thương hiệu (BrandingAdminPanel, 26/09/2026) */

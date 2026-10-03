@@ -310,6 +310,20 @@ export interface OrgUserPayload {
   department_id: number;
   position_id: number;
   role_ids?: string[];
+  // Trùng tên đăng nhập với tài khoản đã xoá (409 DELETED_USER_EXISTS): admin
+  // chọn khôi phục tài khoản cũ hay tạo tài khoản mới rồi gửi lại.
+  deleted_user_action?: 'restore' | 'new';
+}
+export interface DeletedUserConflict {
+  code: 'DELETED_USER_EXISTS';
+  deleted_user: {
+    user_id: string;
+    user_name: string;
+    full_name: string | null;
+    email: string | null;
+    phone_number: string | null;
+    deleted_at: string | null;
+  };
 }
 export const searchOrgUsers = (body: {
   pageIndex: number;
@@ -321,7 +335,7 @@ export const searchOrgUsers = (body: {
 export const getOrgUser = (user_id: string) =>
   get<OrgUserDetail>(`admin/org/users/${encodeURIComponent(user_id)}`);
 export const createOrgUser = (payload: OrgUserPayload) =>
-  post<OkMessage & { user_id: string }>('admin/org/users', payload);
+  post<OkMessage & { user_id: string; restored?: boolean; data?: DeletedUserConflict }>('admin/org/users', payload);
 export const updateOrgUser = (payload: OrgUserPayload) => put<OkMessage>('admin/org/users', payload);
 export const deleteOrgUsers = (user_ids: string[]) =>
   post<OkMessage>('admin/org/users/delete', { user_ids });
