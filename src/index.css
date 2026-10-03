@@ -249,7 +249,11 @@ body {
     scroll-behavior: auto !important;
     animation-duration: 1ms !important;
     animation-iteration-count: 1 !important;
-    transition-duration: 1ms !important;
+    /* KHÔNG ép transition-duration (từng có "1ms !important"): popup antd
+       (Select/Dropdown/DatePicker/Tooltip) đo vị trí trong lúc transition mở ->
+       transition 1ms làm @rc-component/trigger tính ra toạ độ âm hàng nghìn px,
+       danh sách "mở" nhưng nằm ngoài màn hình. Gặp thật 04/10/2026 trên Remote
+       Desktop (RDP tắt animation -> Chrome báo prefers-reduced-motion: reduce). */
   }
   .page::before,
   .page::after,
