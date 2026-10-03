@@ -100,3 +100,26 @@ trong Account chỉ tải khi người dùng mở tab tương ứng. **Vì sao:*
 login, animation, danh sách phiên và bảng quản trị ứng dụng, làm trang đầu tải/phân tích JavaScript chậm
 không cần thiết. Theme shell và kiểm tra phiên vẫn ở bundle đầu để không thay đổi luồng đăng nhập; màn
 cần thiết hiện fallback tối giản trong lúc chunk tải.
+
+## Modal chỉ cuộn dọc + giữ chỗ thanh cuộn (04/10/2026)
+
+**Chọn:** `.ant-modal-body { overflow-x: hidden; overflow-y: auto; scrollbar-gutter: stable }` (+ đệm 4px
+cho viền focus). **Lý do:** `overflow-y: auto` kéo `overflow-x` thành `auto`, margin âm của `<Row gutter>`
+tràn ra sinh thanh cuộn ngang ở form "Thêm người dùng". Trên Windows thanh cuộn dọc chiếm bề rộng: form
+cao vừa ngưỡng thì thanh cuộn bật → form hẹp lại → cột wrap khác → thấp lại → thanh cuộn tắt… = nháy khi
+gõ (macOS thanh cuộn nổi nên không tái hiện). `scrollbar-gutter: stable` giữ chỗ cố định, cắt vòng lặp.
+
+## Bảng người dùng: xuống dòng thay vì cắt chữ (04/10/2026)
+
+Cột "Người dùng" trước bọc trong antd `Space` (item không co được) + `ellipsis` của cột → chữ bị che cụt,
+không có "…". Nay dùng flex `min-width: 0`, chữ dài tự xuống dòng (`ssoOrg-cell--wrap`), bảng
+`tableLayout="fixed"`, tổng cột = khung ~686px (Người dùng 210 / Liên hệ 150 / Chức vụ-Phòng ban 180 /
+thao tác 144 = 4 nút 32px + padding) để không cuộn ngang. Bỏ cột "Nhóm quyền" (chỉ hiện ở màn ≥1600px và
+làm tràn ngang) - xem nhóm quyền trong form sửa.
+
+## Thêm người dùng trùng tên đăng nhập của tài khoản đã xoá (04/10/2026)
+
+API trả 409 `DELETED_USER_EXISTS` → hộp chọn **Khôi phục tài khoản cũ** (giữ `user_id`: lịch sử công việc,
+tài chính, tài khoản chat quay lại; chat/meeting upsert theo `id` và có unique email/SĐT nên cùng người
+phải khôi phục) hoặc **Tạo tài khoản mới** (người khác). Cảnh báo khi email/SĐT trùng tài khoản cũ.
+Xem `api-sso/docs/api.md` `POST /admin/org/users`.
