@@ -396,23 +396,56 @@ export const upsertOrgRole = (payload: Partial<Omit<OrgRole, 'role_id'>> & { rol
 export const deleteOrgRoles = (role_ids: string[]) => post<OkMessage>('admin/org/roles/delete', { role_ids });
 
 export type SyncTarget = 'finance' | 'task' | 'chat' | 'meeting';
+export type SyncRowStatus = 'pending' | 'done' | 'failed' | 'skipped';
+export type SyncEntity = 'user' | 'user_roles' | 'branch' | 'department' | 'position' | 'role';
+export interface SyncTargetSummary {
+  target: SyncTarget;
+  pending: number;
+  retrying: number;
+  failed: number;
+  head_error: string | null;
+  head_attempts: number | null;
+  head_next_retry_at: string | null;
+  oldest_pending: string | null;
+  last_done_at: string | null;
+}
 export interface SyncStatus {
   enabled_targets: SyncTarget[];
-  summary: { target: SyncTarget; pending: number; failed: number; last_error: string | null; oldest_pending: string | null }[];
-  failed: {
-    id: string;
-    target: SyncTarget;
-    entity: string;
-    op: string;
-    entity_id: string;
-    attempts: number;
-    last_error: string | null;
-    updated_at: string;
-  }[];
+  summary: SyncTargetSummary[];
+}
+export interface SyncLogRow {
+  id: string;
+  target: SyncTarget;
+  entity: SyncEntity;
+  op: 'upsert' | 'delete';
+  entity_id: string;
+  entity_label: string | null;
+  status: SyncRowStatus;
+  attempts: number;
+  last_error: string | null;
+  note: string | null;
+  next_retry_at: string;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+  created_by_name: string | null;
+}
+export interface SyncHistoryFilter {
+  target?: SyncTarget | null;
+  status?: SyncRowStatus | null;
+  entity?: SyncEntity | null;
+  search?: string | null;
+  pageIndex: number;
+  pageSize: number;
 }
 export const getSyncStatus = () => get<SyncStatus>('admin/org/sync/status');
-export const retrySync = (target?: SyncTarget | null) =>
-  post<OkMessage & { count: number }>('admin/org/sync/retry', { target: target ?? null });
+export const getSyncHistory = (filter: SyncHistoryFilter) =>
+  post<{ totalItems: number; page: number; pageSize: number; data: SyncLogRow[] }>('admin/org/sync/history', filter);
+// Theo đích (target, null = mọi đích) hoặc theo danh sách id dòng nhật ký.
+export const retrySync = (by: { target?: SyncTarget | null; ids?: string[] | null }) =>
+  post<OkMessage & { count: number }>('admin/org/sync/retry', by);
+export const skipSync = (by: { target?: SyncTarget | null; ids?: string[] | null }) =>
+  post<OkMessage & { count: number }>('admin/org/sync/skip', by);
 export const resyncTarget = (target: SyncTarget) =>
   post<OkMessage & { count: number }>('admin/org/sync/resync', { target });
 

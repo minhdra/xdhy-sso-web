@@ -310,6 +310,13 @@ export default function UsersAdminPanel() {
         return;
       }
       if (!res.ok) {
+        // 409 PHONE_TAKEN / EMAIL_TAKEN: báo ngay dưới ô tương ứng (kèm tài
+        // khoản đang giữ giá trị đó).
+        const field = (conflict as { field?: 'phone_number' | 'email' } | undefined)?.field;
+        if (res.status === 409 && field) {
+          form.setFields([{ name: field, errors: [res.data.message || 'Giá trị đã được dùng.'] }]);
+          form.scrollToField(field);
+        }
         notification.error({ message: res.data.message || 'Không lưu được người dùng.' });
         return;
       }

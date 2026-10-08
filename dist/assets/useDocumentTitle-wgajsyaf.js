@@ -1,1 +1,0 @@
-import{r as t}from"./vendor-react-Bp4ILrXF.js";import{u as n}from"./index-CmF1xy4M.js";function s(o){const r=n(e=>e.branding.org_name);t.useEffect(()=>{document.title=`${o} | ${r}`},[o,r])}export{s as u};

@@ -1410,3 +1410,57 @@ body {
   max-width: 104px;
   object-fit: contain;
 }
+
+/* Nhật ký đồng bộ (SyncAdminPanel) - panel hẹp: bộ lọc dạng lưới co giãn,
+   bảng gộp cột, chữ phụ nhỏ xếp dọc trong ô. */
+.ssoSyncLog-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.ssoSyncLog-filters .ssoSyncLog-search {
+  grid-column: span 2;
+}
+.ssoSyncLog-bulk {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ssoSyncLog-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ssoSyncLog-sub {
+  font-size: 12px;
+  line-height: 1.4;
+}
+.ssoSyncLog-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.ssoSyncLog-actions .ant-btn {
+  padding-inline: 0;
+  height: auto;
+}
+@media (max-width: 480px) {
+  .ssoSyncLog-filters .ssoSyncLog-search {
+    grid-column: 1 / -1;
+  }
+}
+.ssoSyncLog-tip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 420px;
+}
+.ssoSyncLog-tip code {
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  opacity: 0.85;
+}

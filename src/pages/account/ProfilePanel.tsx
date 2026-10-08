@@ -94,6 +94,12 @@ export default function ProfilePanel() {
           : null,
       });
       if (!res.ok) {
+        // 409 PHONE_TAKEN / EMAIL_TAKEN: SĐT/email đã thuộc tài khoản khác -
+        // báo ngay dưới ô tương ứng.
+        const field = (res.data as { data?: { field?: 'phone_number' | 'email' } }).data?.field;
+        if (res.status === 409 && field) {
+          form.setFields([{ name: field, errors: [res.data.message || 'Giá trị đã được dùng.'] }]);
+        }
         notification.error({
           message: res.data.message || 'Không lưu được thông tin.',
         });
