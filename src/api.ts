@@ -374,6 +374,9 @@ export interface OrgUnitRow {
   fax?: string | null;
   address?: string | null;
   description?: string | null;
+  // Chỉ chức vụ: trọng số cấp bậc (số lớn = cấp cao, null = chưa xếp cấp) + số nhân sự đang hoạt động.
+  rank_weight?: number | null;
+  employee_count?: number;
 }
 export const searchOrgUnits = (kind: OrgUnitKind, body: { pageIndex: number; pageSize: number; search_content?: string }) =>
   post<Paged<OrgUnitRow>>(`admin/org/${kind}/search`, body);
