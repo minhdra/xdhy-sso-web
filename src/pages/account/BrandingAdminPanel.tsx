@@ -2,6 +2,7 @@ import { MinusCircleOutlined, PlusOutlined, UndoOutlined, UploadOutlined } from 
 import {
   App as AntdApp,
   Button,
+  Checkbox,
   Col,
   ColorPicker,
   Form,
@@ -10,7 +11,6 @@ import {
   Row,
   Skeleton,
   Space,
-  Switch,
   Tooltip,
   Upload,
 } from 'antd';
@@ -197,13 +197,18 @@ export default function BrandingAdminPanel() {
             </Form.Item>
           </Col>
           <Col xs={24} md={6}>
-            <Form.Item name="short_name" label="Tên viết tắt" validateFirst rules={[...RULES_FORM.required, ...RULES_FORM.text, maxLen(50)]}>
+            <Form.Item
+              name="short_name"
+              label="Tên viết tắt"
+              validateFirst
+              rules={[...RULES_FORM.required, ...RULES_FORM.text, maxLen(50)]}
+              extra={
+                <Form.Item name="show_short_name" valuePropName="checked" noStyle>
+                  <Checkbox>Hiện cạnh logo</Checkbox>
+                </Form.Item>
+              }
+            >
               <Input placeholder="vd: ABC" />
-            </Form.Item>
-          </Col>
-          <Col xs={24} md={12}>
-            <Form.Item name="show_short_name" label="Hiện tên viết tắt cạnh logo" valuePropName="checked" tooltip="Bật khi logo không có chữ: tên viết tắt hiện cạnh logo ở thanh đầu trang.">
-              <Switch />
             </Form.Item>
           </Col>
           <Col xs={24} md={6}>
