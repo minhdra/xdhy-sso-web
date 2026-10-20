@@ -506,6 +506,21 @@ export const getSessions = () => get<SsoSession[]>('account/sessions');
 export const revokeSessionRequest = (session_id: string) =>
   post<{ success: boolean; message: string }>('account/sessions/revoke', { session_id });
 
+// Quản trị: phiên đang hoạt động của mọi người (20/10/2026).
+export interface AdminSession extends SsoSession {
+  user_id: string;
+  user_name: string;
+  full_name: string | null;
+}
+export const getAdminSessions = (params: { q: string; page: number; page_size: number }) =>
+  get<{ items: AdminSession[]; total: number; page: number; page_size: number }>(
+    `admin/sessions?${new URLSearchParams({ q: params.q, page: String(params.page), page_size: String(params.page_size) })}`,
+  );
+export const adminRevokeSession = (session_id: string) =>
+  post<OkMessage>('admin/sessions/revoke', { session_id });
+export const adminRevokeUserSessions = (user_id: string) =>
+  post<OkMessage>('admin/sessions/revoke-user', { user_id });
+
 // Ảnh avatar. Từ 09/09/2026 api-sso (/me, /account/profile) đã trả URL sẵn
 // sàng ("/api/api-sso/uploads/..." hoặc "/api/api-core/uploads/...") - hàm này
 // chỉ còn để xử lý path THÔ từ chỗ khác (vd trang quản trị app dùng proc

@@ -1,12 +1,15 @@
 import { LaptopOutlined } from '@ant-design/icons';
-import { App as AntdApp, Button, List, Skeleton, Tag } from 'antd';
-import { useEffect, useState } from 'react';
+import { App as AntdApp, Button, List, Segmented, Skeleton, Tag } from 'antd';
+import { lazy, Suspense, useEffect, useState } from 'react';
 
 import { getSessions, revokeSessionRequest, type SsoSession } from '../../api';
+import { useSessionStore } from '../../store/session';
+
+const AllSessionsPanel = lazy(() => import('./AllSessionsPanel'));
 
 // Parse gọn user-agent -> "Chrome · macOS" (không cần thư viện).
 // Không phân biệt được iPad bật "Desktop site" (UA giống hệt Mac) - hiện "macOS".
-function describeAgent(ua: string | null): string {
+export function describeAgent(ua: string | null): string {
   if (!ua) return 'Không rõ thiết bị';
 
   // Client không phải trình duyệt (app di động, công cụ gọi API): UA không có
@@ -54,7 +57,7 @@ function describeAgent(ua: string | null): string {
   return os ? `${browser} · ${os}` : browser;
 }
 
-function relativeTime(iso: string): string {
+export function relativeTime(iso: string): string {
   const then = new Date(iso).getTime();
   if (Number.isNaN(then)) return 'không rõ';
   const diff = Date.now() - then;
@@ -71,7 +74,7 @@ function relativeTime(iso: string): string {
 
 // Cột `ip` có thể kèm ":port" (117.7.137.54:57741) do IIS/ARR - bỏ khi hiển
 // thị. IPv6 trần (nhiều dấu ":") giữ nguyên; loopback gọi là "localhost".
-function displayIp(ip: string | null): string {
+export function displayIp(ip: string | null): string {
   if (!ip) return 'IP không rõ';
   if (ip === '::1' || ip === '127.0.0.1' || ip === '::ffff:127.0.0.1') return 'localhost';
   const mapped = ip.match(/^::ffff:(\d{1,3}(?:\.\d{1,3}){3})(?::\d+)?$/i);
@@ -84,7 +87,35 @@ function displayIp(ip: string | null): string {
   return parts.length === 2 ? parts[0] : ip;
 }
 
+// Quản trị viên có thêm chế độ xem phiên của mọi người để thu hồi; người thường
+// chỉ thấy phiên của chính mình.
 export default function SessionsPanel() {
+  const isAdmin = useSessionStore((st) => st.user?.is_admin ?? false);
+  const [scope, setScope] = useState<'mine' | 'all'>('mine');
+  if (!isAdmin) return <MySessions />;
+  return (
+    <>
+      <Segmented
+        value={scope}
+        onChange={(v) => setScope(v as 'mine' | 'all')}
+        options={[
+          { label: 'Của tôi', value: 'mine' },
+          { label: 'Mọi người', value: 'all' },
+        ]}
+        style={{ marginBottom: 16 }}
+      />
+      {scope === 'mine' ? (
+        <MySessions />
+      ) : (
+        <Suspense fallback={<Skeleton active paragraph={{ rows: 6 }} />}>
+          <AllSessionsPanel />
+        </Suspense>
+      )}
+    </>
+  );
+}
+
+function MySessions() {
   const { notification, modal } = AntdApp.useApp();
   const [sessions, setSessions] = useState<SsoSession[] | null>(null);
   const [revoking, setRevoking] = useState<string | null>(null);
