@@ -557,6 +557,12 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
   outline: 3px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
   outline-offset: 2px;
 }
+.ssoHeader-brandName {
+  white-space: nowrap;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
 .ssoHeader-brand img {
   width: auto;
   height: 40px;

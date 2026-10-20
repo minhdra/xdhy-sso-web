@@ -456,6 +456,7 @@ export const resyncTarget = (target: SyncTarget) =>
 export interface Branding {
   org_name: string;
   short_name: string;
+  show_short_name: boolean;
   app_name: string;
   tagline: string | null;
   login_heading: string | null;

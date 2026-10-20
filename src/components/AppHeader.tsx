@@ -62,9 +62,12 @@ export default function AppHeader() {
         >
           <img
             src={logoFor(branding, mode)}
-            alt={branding.short_name}
+            alt={branding.show_short_name ? "" : branding.short_name}
             onError={(e) => (e.currentTarget.style.display = "none")}
           />
+          {branding.show_short_name && (
+            <span className="ssoHeader-brandName">{branding.short_name}</span>
+          )}
         </button>
 
         <div className="ssoHeader-right">

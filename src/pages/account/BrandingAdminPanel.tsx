@@ -10,6 +10,7 @@ import {
   Row,
   Skeleton,
   Space,
+  Switch,
   Tooltip,
   Upload,
 } from 'antd';
@@ -200,6 +201,11 @@ export default function BrandingAdminPanel() {
               <Input placeholder="vd: ABC" />
             </Form.Item>
           </Col>
+          <Col xs={24} md={12}>
+            <Form.Item name="show_short_name" label="Hiện tên viết tắt cạnh logo" valuePropName="checked" tooltip="Bật khi logo không có chữ: tên viết tắt hiện cạnh logo ở thanh đầu trang.">
+              <Switch />
+            </Form.Item>
+          </Col>
           <Col xs={24} md={6}>
             <Form.Item name="app_name" label="Tên ứng dụng" validateFirst rules={[...RULES_FORM.required, ...RULES_FORM.text, maxLen(100)]}>
               <Input placeholder="vd: Tài khoản" />
@@ -221,7 +227,7 @@ export default function BrandingAdminPanel() {
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
-            <Form.Item name="footer_text" validateFirst rules={[...RULES_FORM.text, maxLen(250)]} label="Chân trang" tooltip="Dùng {year} để tự hiện năm hiện tại.">
+            <Form.Item name="footer_text" validateFirst rules={[...RULES_FORM.footerText, maxLen(250)]} label="Chân trang" tooltip="Dùng {year} để tự hiện năm hiện tại.">
               <Input placeholder="vd: © {year} Công ty ABC. All rights reserved." maxLength={250} />
             </Form.Item>
           </Col>

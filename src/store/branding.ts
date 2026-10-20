@@ -9,6 +9,7 @@ import { type Branding, getBranding } from '../api';
 export const DEFAULT_BRANDING: Branding = {
   org_name: 'An Trường Phát Hưng Yên',
   short_name: 'XDHY',
+  show_short_name: false,
   app_name: 'Tài khoản',
   tagline: 'Một tài khoản cho mọi ứng dụng',
   login_heading: 'Cổng truy cập chung của doanh nghiệp',
