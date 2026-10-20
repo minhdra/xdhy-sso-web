@@ -1158,7 +1158,8 @@ textarea::placeholder,
   flex: 1 1 auto;
   min-width: 0;
 }
-.ssoPanel-headRow > .ant-btn {
+.ssoPanel-headRow > .ant-btn,
+.ssoPanel-headRow > .ant-segmented {
   flex: none;
 }
 .ssoPanel-headRow .ssoPanel-hint {

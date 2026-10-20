@@ -1,6 +1,6 @@
 import { StopOutlined } from '@ant-design/icons';
 import { App as AntdApp, Button, Empty, Input, Popconfirm, Space, Table, Tag } from 'antd';
-import { useCallback, useEffect, useState } from 'react';
+import { type ReactNode, useCallback, useEffect, useState } from 'react';
 
 import {
   type AdminSessionUser,
@@ -17,7 +17,7 @@ const PAGE_SIZE = 20;
 // Quản trị: người đang có phiên đăng nhập, gom theo người - bấm mở rộng để xem
 // từng phiên và thu hồi (20/10/2026). BE chặn thu hồi phiên hiện tại và tài
 // khoản của chính mình - nút bị ẩn tương ứng.
-export default function AllSessionsPanel() {
+export default function AllSessionsPanel({ toolbar }: { toolbar?: ReactNode }) {
   const { notification } = AntdApp.useApp();
   const myUserName = useSessionStore((st) => st.user?.user_name);
   const [rows, setRows] = useState<AdminSessionUser[]>([]);
@@ -111,10 +111,15 @@ export default function AllSessionsPanel() {
 
   return (
     <div className="ssoPanel ssoAppsAdmin">
-      <h2>Phiên đăng nhập của mọi người</h2>
-      <p className="ssoPanel-hint" style={{ marginTop: 0 }}>
-        Gom theo người. Bấm vào dấu mũi tên để xem từng phiên; thu hồi một phiên thì thiết bị đó phải đăng nhập lại.
-      </p>
+      <div className="ssoPanel-headRow">
+        <div>
+          <h2>Phiên đăng nhập của mọi người</h2>
+          <p className="ssoPanel-hint" style={{ marginTop: 0 }}>
+            Gom theo người. Bấm vào dấu mũi tên để xem từng phiên; thu hồi một phiên thì thiết bị đó phải đăng nhập lại.
+          </p>
+        </div>
+        {toolbar}
+      </div>
       <Space style={{ marginBottom: 12 }}>
         <Input.Search
           allowClear

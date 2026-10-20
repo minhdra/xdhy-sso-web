@@ -1,6 +1,6 @@
 import { LaptopOutlined } from '@ant-design/icons';
 import { App as AntdApp, Button, List, Segmented, Skeleton, Tag } from 'antd';
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, type ReactNode, Suspense, useEffect, useState } from 'react';
 
 import { getSessions, revokeSessionRequest, type SsoSession } from '../../api';
 import { useSessionStore } from '../../store/session';
@@ -93,29 +93,37 @@ export default function SessionsPanel() {
   const isAdmin = useSessionStore((st) => st.user?.is_admin ?? false);
   const [scope, setScope] = useState<'mine' | 'all'>('mine');
   if (!isAdmin) return <MySessions />;
-  return (
-    <>
-      <Segmented
-        value={scope}
-        onChange={(v) => setScope(v as 'mine' | 'all')}
-        options={[
-          { label: 'Của tôi', value: 'mine' },
-          { label: 'Mọi người', value: 'all' },
-        ]}
-        style={{ marginBottom: 16 }}
-      />
-      {scope === 'mine' ? (
-        <MySessions />
-      ) : (
-        <Suspense fallback={<Skeleton active paragraph={{ rows: 6 }} />}>
-          <AllSessionsPanel />
-        </Suspense>
-      )}
-    </>
+  // Công tắc nằm cùng dòng với tiêu đề của từng chế độ (headRow bên dưới).
+  const toolbar = (
+    <Segmented
+      value={scope}
+      onChange={(v) => setScope(v as 'mine' | 'all')}
+      options={[
+        { label: 'Của tôi', value: 'mine' },
+        { label: 'Mọi người', value: 'all' },
+      ]}
+    />
+  );
+  return scope === 'mine' ? (
+    <MySessions toolbar={toolbar} />
+  ) : (
+    <Suspense
+      fallback={
+        <div className="ssoPanel">
+          <div className="ssoPanel-headRow">
+            <h2>Phiên đăng nhập của mọi người</h2>
+            {toolbar}
+          </div>
+          <Skeleton active paragraph={{ rows: 6 }} />
+        </div>
+      }
+    >
+      <AllSessionsPanel toolbar={toolbar} />
+    </Suspense>
   );
 }
 
-function MySessions() {
+function MySessions({ toolbar }: { toolbar?: ReactNode }) {
   const { notification, modal } = AntdApp.useApp();
   const [sessions, setSessions] = useState<SsoSession[] | null>(null);
   const [revoking, setRevoking] = useState<string | null>(null);
@@ -160,7 +168,10 @@ function MySessions() {
   if (sessions === null) {
     return (
       <div className="ssoPanel">
-        <h2>Phiên đăng nhập</h2>
+        <div className="ssoPanel-headRow">
+          <h2>Phiên đăng nhập</h2>
+          {toolbar}
+        </div>
         <Skeleton active title={{ width: '38%' }} paragraph={{ rows: 5 }} />
       </div>
     );
@@ -178,10 +189,15 @@ function MySessions() {
 
   return (
     <div className="ssoPanel">
-      <h2>Phiên đăng nhập</h2>
-      <p className="ssoPanel-hint" style={{ marginTop: 0 }}>
-        Các thiết bị đang đăng nhập vào tài khoản của bạn.
-      </p>
+      <div className="ssoPanel-headRow">
+        <div>
+          <h2>Phiên đăng nhập</h2>
+          <p className="ssoPanel-hint" style={{ marginTop: 0 }}>
+            Các thiết bị đang đăng nhập vào tài khoản của bạn.
+          </p>
+        </div>
+        {toolbar}
+      </div>
 
       <div className="ssoSessionGroups">
         {groups.map(([agent, agentSessions]) => (
