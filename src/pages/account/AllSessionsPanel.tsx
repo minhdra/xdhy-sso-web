@@ -113,6 +113,7 @@ export default function AllSessionsPanel() {
             title: '',
             key: 'actions',
             width: 190,
+            fixed: 'right',
             render: (_, s) => (
               <Space size={4}>
                 {!s.current && (
