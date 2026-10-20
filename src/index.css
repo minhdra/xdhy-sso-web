@@ -301,6 +301,17 @@ body {
   max-width: 380px;
   margin: 0 auto;
 }
+.brandLogo {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.brandLogo .logo {
+  margin-bottom: 0;
+}
+.brandLogo .brandName {
+  font-size: 1.625rem;
+}
 .logo {
   width: auto;
   height: 52px;
@@ -560,7 +571,7 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
 /* Tên viết tắt cạnh logo: gradient theo màu chủ đạo (tab Thương hiệu) + vạch
    ngăn mảnh với logo. Màu chữ thường là dự phòng khi trình duyệt không hỗ trợ
    background-clip: text. */
-.ssoHeader-brandName {
+.brandName {
   position: relative;
   padding-left: 12px;
   white-space: nowrap;
@@ -570,7 +581,7 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
   line-height: 1;
   color: var(--color-primary);
 }
-.ssoHeader-brandName::before {
+.brandName::before {
   content: '';
   position: absolute;
   left: 0;
@@ -580,7 +591,7 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
   transform: translateY(-50%);
 }
 @supports (background-clip: text) or (-webkit-background-clip: text) {
-  .ssoHeader-brandName {
+  .brandName {
     background: linear-gradient(
       135deg,
       color-mix(in srgb, var(--color-primary) 70%, #000) 0%,
@@ -593,14 +604,14 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
   }
 }
 /* Nền tối: sắc đậm của màu chủ đạo chìm vào nền -> dùng dải sáng hơn. */
-:root[data-theme="dark"] .ssoHeader-brandName {
+:root[data-theme="dark"] .brandName {
   color: color-mix(in srgb, var(--color-primary) 55%, #fff);
 }
-:root[data-theme="dark"] .ssoHeader-brandName::before {
+:root[data-theme="dark"] .brandName::before {
   border-left-color: color-mix(in srgb, var(--color-primary) 40%, #fff 30%);
 }
 @supports (background-clip: text) or (-webkit-background-clip: text) {
-  :root[data-theme="dark"] .ssoHeader-brandName {
+  :root[data-theme="dark"] .brandName {
     background: linear-gradient(
       135deg,
       color-mix(in srgb, var(--color-primary) 55%, #fff) 0%,

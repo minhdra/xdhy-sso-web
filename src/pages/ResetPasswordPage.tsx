@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { resetPasswordConfirmRequest } from '../api';
 import { footerText, logoFor, useBrandingStore } from '../store/branding';
+import { BrandName } from '../components/BrandName';
 import { useThemeStore } from '../store/theme';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { RULES_FORM } from '../validator';
@@ -71,12 +72,15 @@ export default function ResetPasswordPage() {
               />
             ) : (
               <>
-                <img
-                  className="logo"
-                  src={logoFor(branding, themeMode)}
-                  alt={branding.short_name}
-                  onError={(e) => (e.currentTarget.style.display = 'none')}
-                />
+                <div className="brandLogo">
+                  <img
+                    className="logo"
+                    src={logoFor(branding, themeMode)}
+                    alt={branding.show_short_name ? "" : branding.short_name}
+                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                  />
+                  <BrandName />
+                </div>
                 <Typography.Title level={2} style={{ marginBottom: 4 }}>
                   Đặt mật khẩu mới
                 </Typography.Title>

@@ -19,6 +19,7 @@ import loginBadge from '../assets/login-badge.json';
 import { forgotPasswordRequest, getMe, loginRequest, refreshRequest } from '../api';
 import { PageLoading } from '../components/PageLoading';
 import { footerText, logoFor, useBrandingStore } from '../store/branding';
+import { BrandName } from '../components/BrandName';
 import { useThemeStore } from '../store/theme';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useSessionStore } from '../store/session';
@@ -223,12 +224,15 @@ export default function LoginPage() {
               />
             ) : (
               <>
-                <img
-                  className="logo"
-                  src={logoFor(branding, themeMode)}
-                  alt={branding.short_name}
-                  onError={(e) => (e.currentTarget.style.display = 'none')}
-                />
+                <div className="brandLogo">
+                  <img
+                    className="logo"
+                    src={logoFor(branding, themeMode)}
+                    alt={branding.show_short_name ? "" : branding.short_name}
+                    onError={(e) => (e.currentTarget.style.display = 'none')}
+                  />
+                  <BrandName />
+                </div>
 
                 {sessionCheckFailed && (
                   <Alert
