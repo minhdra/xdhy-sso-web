@@ -507,13 +507,16 @@ export const revokeSessionRequest = (session_id: string) =>
   post<{ success: boolean; message: string }>('account/sessions/revoke', { session_id });
 
 // Quản trị: phiên đang hoạt động của mọi người (20/10/2026).
-export interface AdminSession extends SsoSession {
+export interface AdminSessionUser {
   user_id: string;
   user_name: string;
   full_name: string | null;
+  session_count: number;
+  last_seen_at: string;
+  sessions: SsoSession[];
 }
 export const getAdminSessions = (params: { q: string; page: number; page_size: number }) =>
-  get<{ items: AdminSession[]; total: number; page: number; page_size: number }>(
+  get<{ items: AdminSessionUser[]; total: number; page: number; page_size: number }>(
     `admin/sessions?${new URLSearchParams({ q: params.q, page: String(params.page), page_size: String(params.page_size) })}`,
   );
 export const adminRevokeSession = (session_id: string) =>
