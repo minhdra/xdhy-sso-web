@@ -592,6 +592,25 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
     -webkit-text-fill-color: transparent;
   }
 }
+/* Nền tối: sắc đậm của màu chủ đạo chìm vào nền -> dùng dải sáng hơn. */
+:root[data-theme="dark"] .ssoHeader-brandName {
+  color: color-mix(in srgb, var(--color-primary) 55%, #fff);
+}
+:root[data-theme="dark"] .ssoHeader-brandName::before {
+  border-left-color: color-mix(in srgb, var(--color-primary) 40%, #fff 30%);
+}
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  :root[data-theme="dark"] .ssoHeader-brandName {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-primary) 55%, #fff) 0%,
+      color-mix(in srgb, var(--color-primary) 30%, #fff) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
 .ssoHeader-brand img {
   width: auto;
   height: 40px;
