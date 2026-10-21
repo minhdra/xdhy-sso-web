@@ -25,7 +25,7 @@ import {
   updateBranding,
   uploadBrandingImage,
 } from '../../api';
-import { DEFAULT_LOGO, footerText, useBrandingStore } from '../../store/branding';
+import { DEFAULT_BRANDING, DEFAULT_LOGO, footerText, useBrandingStore } from '../../store/branding';
 import { maxLen, RULES_FORM } from '../../validator';
 
 const IMAGES: { kind: BrandingImageKind; label: string; hint: string; accept: string; box: number }[] = [
@@ -222,8 +222,19 @@ export default function BrandingAdminPanel() {
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
-            <Form.Item name="primary_color" label="Màu chủ đạo" rules={RULES_FORM.required}>
-              <ColorPicker showText format="hex" disabledAlpha />
+            <Form.Item label="Màu chủ đạo">
+              <Space>
+                <Form.Item name="primary_color" noStyle rules={RULES_FORM.required}>
+                  <ColorPicker showText format="hex" disabledAlpha />
+                </Form.Item>
+                <Button
+                  icon={<UndoOutlined />}
+                  disabled={previewColor.toLowerCase() === DEFAULT_BRANDING.primary_color}
+                  onClick={() => form.setFieldValue('primary_color', DEFAULT_BRANDING.primary_color)}
+                >
+                  Màu mặc định
+                </Button>
+              </Space>
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
