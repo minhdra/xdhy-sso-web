@@ -1,0 +1,1 @@
+import{u as a,j as s}from"./index-C0TpxZNv.js";import{r as t}from"./vendor-react-Bp4ILrXF.js";function u(){const n=a(r=>r.branding);return n.show_short_name?s.jsx("span",{className:"brandName",children:n.short_name}):null}function i(n){const r=a(e=>e.branding.org_name);t.useEffect(()=>{document.title=`${n} | ${r}`},[n,r])}export{u as B,i as u};
