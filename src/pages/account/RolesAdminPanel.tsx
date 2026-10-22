@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { deleteOrgRoles, type OrgRole, searchOrgRoles, upsertOrgRole } from '../../api';
 import { maxLen, RULES_FORM } from '../../validator';
+import { TABLE_SCROLL_Y } from '../../tableScroll';
 
 const PAGE_SIZE = 20;
 // Nhóm "Quản trị hệ thống" - chốt chặn admin, không cho xoá/đổi mã.
@@ -130,7 +131,7 @@ export default function RolesAdminPanel() {
         size="small"
         loading={loading}
         dataSource={rows}
-        scroll={{ x: 480 }}
+        scroll={{ x: 480, y: TABLE_SCROLL_Y }}
         pagination={{ current: page, pageSize: PAGE_SIZE, total, showSizeChanger: false, onChange: setPage }}
         columns={[
           {

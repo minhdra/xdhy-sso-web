@@ -1,9 +1,10 @@
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
-import { Alert, App as AntdApp, Button, Form, Input, Modal, Popconfirm, Segmented, Space, Table, Tooltip } from 'antd';
+import { Alert, App as AntdApp, Button, Form, Input, InputNumber, Modal, Popconfirm, Segmented, Space, Table, Tag, Tooltip } from 'antd';
 import { useCallback, useEffect, useState } from 'react';
 
 import { deleteOrgUnits, type OrgUnitKind, type OrgUnitRow, searchOrgUnits, upsertOrgUnit } from '../../api';
 import { maxLen, RULES_FORM } from '../../validator';
+import { TABLE_SCROLL_Y } from '../../tableScroll';
 
 const PAGE_SIZE = 20;
 
@@ -21,10 +22,12 @@ interface UnitForm {
   fax?: string;
   address?: string;
   description?: string;
+  rank_weight?: number | null;
 }
 
-// Chi nhánh / phòng ban / chức vụ (chuyển từ build-web). Trọng số chức vụ cho
-// phân quyền giám sát vẫn chỉnh ở app Công việc.
+// Chi nhánh / phòng ban / chức vụ (chuyển từ build-web). Trọng số cấp bậc của chức vụ
+// (rank_weight, phân quyền giám sát ở app Công việc) quản lý TẬP TRUNG ở đây từ 14/10/2026 -
+// api-sso đồng bộ sang Công việc/Tài chính cùng tên, mô tả chức vụ.
 export default function OrgUnitsAdminPanel() {
   const { notification } = AntdApp.useApp();
   const [kind, setKind] = useState<OrgUnitKind>('branches');
@@ -75,6 +78,7 @@ export default function OrgUnitsAdminPanel() {
         fax: editingRow.fax ?? '',
         address: editingRow.address ?? '',
         description: editingRow.description ?? '',
+        rank_weight: editingRow.rank_weight ?? null,
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -88,6 +92,8 @@ export default function OrgUnitsAdminPanel() {
       const payload: Record<string, unknown> = { [idField]: v.id ?? null, [nameField]: v.name.trim() };
       if (cfg.contact) Object.assign(payload, { phone: v.phone ?? '', fax: v.fax ?? '', address: v.address ?? '' });
       else payload.description = v.description ?? '';
+      // Chức vụ luôn gửi trọng số (null = chưa xếp cấp) - đồng bộ sang Công việc/Tài chính.
+      if (kind === 'positions') payload.rank_weight = v.rank_weight ?? null;
       const res = await upsertOrgUnit(kind, payload);
       if (!res.ok) {
         notification.error({ message: res.data.message || 'Không lưu được.' });
@@ -171,7 +177,7 @@ export default function OrgUnitsAdminPanel() {
         size="small"
         loading={loading}
         dataSource={rows}
-        scroll={{ x: 520 }}
+        scroll={{ x: 520, y: TABLE_SCROLL_Y }}
         pagination={{ current: page, pageSize: PAGE_SIZE, total, showSizeChanger: false, onChange: setPage }}
         columns={[
           { title: cfg.label, key: 'name', render: (_, r) => <strong>{r[cfg.nameKey] as string}</strong> },
@@ -180,7 +186,23 @@ export default function OrgUnitsAdminPanel() {
                 { title: 'Điện thoại', dataIndex: 'phone', responsive: ['md' as const] },
                 { title: 'Địa chỉ', dataIndex: 'address', ellipsis: true, responsive: ['lg' as const] },
               ]
-            : [{ title: 'Mô tả', dataIndex: 'description', ellipsis: true, responsive: ['md' as const] }]),
+            : [
+                ...(kind === 'positions'
+                  ? [
+                      {
+                        title: 'Trọng số',
+                        dataIndex: 'rank_weight',
+                        width: 110,
+                        align: 'center' as const,
+                        render: (v: number | null | undefined) =>
+                          v == null ? <Tag>Chưa xếp cấp</Tag> : <strong>{v}</strong>,
+                      },
+                    ]
+                  : []),
+                { title: 'Mô tả', dataIndex: 'description', ellipsis: true, responsive: ['md' as const] },
+              ]),
+          // Cả 3 loại: số nhân sự đang hoạt động thuộc mục đó.
+          { title: 'Số nhân sự', dataIndex: 'employee_count', width: 110, align: 'center' as const },
           {
             title: '',
             key: 'actions',
@@ -240,6 +262,15 @@ export default function OrgUnitsAdminPanel() {
           ) : (
             <Form.Item name="description" label="Mô tả" validateFirst rules={[...RULES_FORM.text, maxLen(500)]}>
               <Input.TextArea autoSize={{ minRows: 2, maxRows: 4 }} placeholder="Nhiệm vụ, phạm vi của chức vụ" />
+            </Form.Item>
+          )}
+          {kind === 'positions' && (
+            <Form.Item
+              name="rank_weight"
+              label="Trọng số cấp bậc"
+              extra="Số lớn là cấp cao hơn; hai chức vụ cùng số là ngang hàng. Để trống = chưa xếp cấp (chỉ thấy việc của chính mình). Ứng dụng Công việc dùng số này để quyết định ai xem và sửa được việc của ai (ví dụ: Ban Giám đốc 100, Chỉ huy trưởng 80, Giám sát 60, Kỹ sư 40)."
+            >
+              <InputNumber min={1} max={1000} precision={0} style={{ width: '100%' }} placeholder="Chưa xếp cấp (1 đến 1000)" />
             </Form.Item>
           )}
         </Form>

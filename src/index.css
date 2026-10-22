@@ -40,6 +40,21 @@ chỉ theo cookie xdhy_theme_mode, set qua data-theme ở main.tsx trước khi 
 render (build-web cũng không theo OS, luôn mặc định light). */
 :root {
   --color-primary: #2563a6;
+  /* Màu thương hiệu: mặc định = bản gốc (xanh dương #2563a6). Đổi màu chủ đạo ở
+     tab Thương hiệu thì store/branding.ts ghi đè các biến --brand-* bằng color-mix. */
+  --brand-orb-a: rgba(114, 181, 232, 0.34);
+  --brand-orb-b: rgba(78, 143, 205, 0.2);
+  --brand-page-grad: linear-gradient(145deg, #eef7ff 0%, #dcecf9 46%, #f5faff 100%);
+  --brand-orb-c: rgba(77, 148, 207, 0.1);
+  --brand-dark-orb-a: rgba(37, 99, 166, 0.24);
+  --brand-dark-grad: linear-gradient(145deg, #111a24 0%, #172536 48%, #101720 100%);
+  --brand-dark-orb-b: rgba(46, 112, 174, 0.14);
+  --brand-progress-bg: rgba(37, 99, 166, 0.14);
+  --brand-progress-fill: linear-gradient(90deg, #2563a6, #3fa9ff);
+  --brand-illus-mid: #1b4c86;
+  --brand-illus-end: #143c6b;
+  --brand-shell-grad: linear-gradient(165deg, #f1f4f9 0%, #e7ecf3 100%);
+
   --color-primary-soft: #e5f0f6;
   --color-page-bg: #fcfafc;
   --color-card-bg: #ffffff;
@@ -48,7 +63,7 @@ render (build-web cũng không theo OS, luôn mặc định light). */
   --color-border: #e8eaed;
   --radius-md: 12px;
   --radius-lg: 16px;
-  --shell-bg: linear-gradient(165deg, #f1f4f9 0%, #e7ecf3 100%);
+  --shell-bg: var(--brand-shell-grad);
   --shadow-card: 0 4px 16px 0 rgba(20, 30, 40, 0.06);
   --shadow-hover: 0 12px 32px 0 rgba(20, 30, 40, 0.12);
   --motion-press: 140ms;
@@ -182,15 +197,15 @@ body {
   background:
     radial-gradient(
       circle at 15% 18%,
-      rgba(114, 181, 232, 0.34),
+      var(--brand-orb-a),
       transparent 31%
     ),
     radial-gradient(
       circle at 87% 82%,
-      rgba(78, 143, 205, 0.2),
+      var(--brand-orb-b),
       transparent 34%
     ),
-    linear-gradient(145deg, #eef7ff 0%, #dcecf9 46%, #f5faff 100%);
+    var(--brand-page-grad);
   padding: 16px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -216,7 +231,7 @@ body {
   bottom: -7%;
   left: 9%;
   border-radius: 50%;
-  background: rgba(77, 148, 207, 0.1);
+  background: var(--brand-orb-c);
   animation: login-orb-drift 16s ease-in-out -4s infinite alternate-reverse;
   pointer-events: none;
 }
@@ -224,15 +239,15 @@ body {
   background:
     radial-gradient(
       circle at 16% 17%,
-      rgba(37, 99, 166, 0.24),
+      var(--brand-dark-orb-a),
       transparent 32%
     ),
     radial-gradient(
       circle at 86% 82%,
-      rgba(46, 112, 174, 0.14),
+      var(--brand-dark-orb-b),
       transparent 35%
     ),
-    linear-gradient(145deg, #111a24 0%, #172536 48%, #101720 100%);
+    var(--brand-dark-grad);
 }
 @keyframes login-orb-drift {
   from {
@@ -301,6 +316,17 @@ body {
   max-width: 380px;
   margin: 0 auto;
 }
+.brandLogo {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.brandLogo .logo {
+  margin-bottom: 0;
+}
+.brandLogo .brandName {
+  font-size: 1.625rem;
+}
 .logo {
   width: auto;
   height: 52px;
@@ -336,8 +362,8 @@ body {
   background: linear-gradient(
     160deg,
     var(--color-primary) 0%,
-    #1b4c86 55%,
-    #143c6b 100%
+    var(--brand-illus-mid) 55%,
+    var(--brand-illus-end) 100%
   );
 }
 .illustrationSide::before {
@@ -366,7 +392,10 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.15));
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.2));
 }
 .illustrationSide.has-image .illustrationAnim {
   display: none;
@@ -397,8 +426,112 @@ body {
   width: 100%;
   max-width: 340px;
   height: auto;
-  /* Lật ngang animation cho nhân vật quay về phía form - đúng bản gốc. */
-  transform: scaleX(-1);
+}
+.buildingIllus {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.buildingIllus-body {
+  fill: rgba(255, 255, 255, 0.9);
+}
+.buildingIllus text,
+.buildingIllus-steel {
+  fill: rgba(255, 255, 255, 0.95);
+}
+.buildingIllus-ground {
+  fill: rgba(255, 255, 255, 0.55);
+}
+.buildingIllus-win {
+  fill: var(--color-primary);
+  opacity: 0.35;
+  animation: buildingWin 5.6s ease-in-out infinite;
+}
+.buildingIllus-beacon {
+  fill: #ffd666;
+  animation: buildingBeacon 1.8s ease-in-out infinite;
+}
+
+.orgIllus-link {
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 5;
+  animation: orgLink 2.4s linear infinite;
+}
+.orgIllus-ring {
+  fill: rgba(255, 255, 255, 0.18);
+  stroke: rgba(255, 255, 255, 0.8);
+  stroke-width: 1.5;
+}
+.orgIllus-node {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: orgNode 3.2s ease-in-out infinite;
+}
+.orgIllus-shade {
+  fill: rgba(0, 0, 0, 0.1);
+}
+.orgIllus-shadow {
+  fill: rgba(0, 0, 0, 0.18);
+}
+.orgIllus-glass {
+  fill: var(--color-primary);
+  opacity: 0.55;
+}
+.orgIllus-door {
+  fill: var(--color-primary);
+  opacity: 0.8;
+}
+.orgIllus-mullion {
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-width: 1.5;
+}
+.orgIllus-tree rect {
+  fill: rgba(255, 255, 255, 0.7);
+}
+.orgIllus-tree circle {
+  fill: rgba(255, 255, 255, 0.45);
+}
+.orgIllus-shine {
+  fill: rgba(255, 255, 255, 0.5);
+}
+.orgIllus-wall {
+  fill: rgba(0, 0, 0, 0.12);
+}
+.orgIllus-flag {
+  fill: #ffd666;
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: orgFlag 2.4s ease-in-out infinite alternate;
+}
+.buildingIllus-glasswin {
+  opacity: 0.55;
+}
+@keyframes orgFlag {
+  from { transform: scaleX(1) skewY(0deg); }
+  to { transform: scaleX(0.82) skewY(6deg); }
+}
+@keyframes orgLink {
+  to { stroke-dashoffset: -18; }
+}
+@keyframes orgNode {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+@keyframes buildingWin {
+  0%, 35% { opacity: 0.3; }
+  50%, 80% { opacity: 1; fill: #ffe08a; }
+  100% { opacity: 0.3; }
+}
+@keyframes buildingBeacon {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .buildingIllus * {
+    animation: none !important;
+  }
 }
 
 /* Toast "Đăng nhập thành công" - copy nguyên từ
@@ -429,12 +562,12 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
   height: 3px;
   border-radius: 999px;
   overflow: hidden;
-  background: rgba(37, 99, 166, 0.14);
+  background: var(--brand-progress-bg);
 }
 .success-bar-fill {
   height: 100%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #2563a6, #3fa9ff);
+  background: var(--brand-progress-fill);
   animation: success-bar-fill 0.6s linear forwards;
 }
 @keyframes success-bar-fill {
@@ -462,15 +595,15 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
   background:
     radial-gradient(
       circle at 15% 18%,
-      rgba(114, 181, 232, 0.34),
+      var(--brand-orb-a),
       transparent 31%
     ),
     radial-gradient(
       circle at 87% 82%,
-      rgba(78, 143, 205, 0.2),
+      var(--brand-orb-b),
       transparent 34%
     ),
-    linear-gradient(145deg, #eef7ff 0%, #dcecf9 46%, #f5faff 100%);
+    var(--brand-page-grad);
 }
 .ssoShell::before,
 .ssoShell::after {
@@ -493,22 +626,22 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
   width: clamp(130px, 17vw, 250px);
   bottom: -7%;
   left: 9%;
-  background: rgba(77, 148, 207, 0.1);
+  background: var(--brand-orb-c);
   animation: login-orb-drift 16s ease-in-out -4s infinite alternate-reverse;
 }
 :root[data-theme="dark"] .ssoShell {
   background:
     radial-gradient(
       circle at 16% 17%,
-      rgba(37, 99, 166, 0.24),
+      var(--brand-dark-orb-a),
       transparent 32%
     ),
     radial-gradient(
       circle at 86% 82%,
-      rgba(46, 112, 174, 0.14),
+      var(--brand-dark-orb-b),
       transparent 35%
     ),
-    linear-gradient(145deg, #111a24 0%, #172536 48%, #101720 100%);
+    var(--brand-dark-grad);
 }
 .ssoHomeShell {
   display: flex;
@@ -536,7 +669,7 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
 .ssoHeader-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0;
   background: none;
   border: 0;
   cursor: pointer;
@@ -556,6 +689,47 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
 .ssoAppCard:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
   outline-offset: 2px;
+}
+/* Tên viết tắt cạnh logo: gradient theo màu chủ đạo (tab Thương hiệu), sát logo,
+   không vạch ngăn. Màu chữ thường là dự phòng khi trình duyệt không hỗ trợ
+   background-clip: text. */
+.brandName {
+  padding-left: 8px;
+  white-space: nowrap;
+  font-size: 1.375rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  color: var(--color-primary);
+}
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  .brandName {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-primary) 70%, #000) 0%,
+      var(--color-primary) 55%,
+      color-mix(in srgb, var(--color-primary) 70%, #fff) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+/* Nền tối: sắc đậm của màu chủ đạo chìm vào nền -> dùng dải sáng hơn. */
+:root[data-theme="dark"] .brandName {
+  color: color-mix(in srgb, var(--color-primary) 55%, #fff);
+}
+@supports (background-clip: text) or (-webkit-background-clip: text) {
+  :root[data-theme="dark"] .brandName {
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--color-primary) 55%, #fff) 0%,
+      color-mix(in srgb, var(--color-primary) 30%, #fff) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
 }
 .ssoHeader-brand img {
   width: auto;
@@ -931,6 +1105,9 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
   display: grid;
   gap: 16px;
   margin-top: 22px;
+  /* Cuộn trong khung thay vì kéo dài cả trang khi có nhiều phiên. */
+  max-height: max(300px, calc(100vh - 360px));
+  overflow-y: auto;
 }
 .ssoSessionGroup {
   overflow: hidden;
@@ -1093,7 +1270,8 @@ textarea::placeholder,
   flex: 1 1 auto;
   min-width: 0;
 }
-.ssoPanel-headRow > .ant-btn {
+.ssoPanel-headRow > .ant-btn,
+.ssoPanel-headRow > .ant-segmented {
   flex: none;
 }
 .ssoPanel-headRow .ssoPanel-hint {
@@ -1409,4 +1587,58 @@ body {
 .ssoBrand-imageBox img {
   max-width: 104px;
   object-fit: contain;
+}
+
+/* Nhật ký đồng bộ (SyncAdminPanel) - panel hẹp: bộ lọc dạng lưới co giãn,
+   bảng gộp cột, chữ phụ nhỏ xếp dọc trong ô. */
+.ssoSyncLog-filters {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.ssoSyncLog-filters .ssoSyncLog-search {
+  grid-column: span 2;
+}
+.ssoSyncLog-bulk {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ssoSyncLog-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.ssoSyncLog-sub {
+  font-size: 12px;
+  line-height: 1.4;
+}
+.ssoSyncLog-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.ssoSyncLog-actions .ant-btn {
+  padding-inline: 0;
+  height: auto;
+}
+@media (max-width: 480px) {
+  .ssoSyncLog-filters .ssoSyncLog-search {
+    grid-column: 1 / -1;
+  }
+}
+.ssoSyncLog-tip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 420px;
+}
+.ssoSyncLog-tip code {
+  font-size: 11px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  opacity: 0.85;
 }

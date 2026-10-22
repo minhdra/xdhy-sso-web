@@ -50,6 +50,7 @@ import { avatarColor } from '../../avatarColor';
 import { resizeImage } from '../../imageResize';
 import { useSessionStore } from '../../store/session';
 import { capitalizeName, maxLen, RULES_FORM } from '../../validator';
+import { TABLE_SCROLL_Y } from '../../tableScroll';
 
 interface UserFormValues {
   user_name?: string;
@@ -310,6 +311,13 @@ export default function UsersAdminPanel() {
         return;
       }
       if (!res.ok) {
+        // 409 PHONE_TAKEN / EMAIL_TAKEN: báo ngay dưới ô tương ứng (kèm tài
+        // khoản đang giữ giá trị đó).
+        const field = (conflict as { field?: 'phone_number' | 'email' } | undefined)?.field;
+        if (res.status === 409 && field) {
+          form.setFields([{ name: field, errors: [res.data.message || 'Giá trị đã được dùng.'] }]);
+          form.scrollToField(field);
+        }
         notification.error({ message: res.data.message || 'Không lưu được người dùng.' });
         return;
       }
@@ -455,7 +463,7 @@ export default function UsersAdminPanel() {
         // "Người dùng" rộng nhất để họ tên ít xuống dòng; chữ dài ở các cột
         // khác tự xuống dòng (ssoOrg-cell--wrap) thay vì bị che.
         tableLayout="fixed"
-        scroll={{ x: 684 }}
+        scroll={{ x: 684, y: TABLE_SCROLL_Y }}
         pagination={{
           current: page,
           pageSize: PAGE_SIZE,

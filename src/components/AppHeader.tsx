@@ -11,6 +11,7 @@ import { avatarSrc, logoutRequest } from "../api";
 import { avatarColor } from "../avatarColor";
 import { useSessionStore } from "../store/session";
 import { logoFor, useBrandingStore } from "../store/branding";
+import { BrandName } from "./BrandName";
 import { useThemeStore } from "../store/theme";
 
 
@@ -62,9 +63,10 @@ export default function AppHeader() {
         >
           <img
             src={logoFor(branding, mode)}
-            alt={branding.short_name}
+            alt={branding.show_short_name ? "" : branding.short_name}
             onError={(e) => (e.currentTarget.style.display = "none")}
           />
+          <BrandName />
         </button>
 
         <div className="ssoHeader-right">

@@ -374,6 +374,9 @@ export interface OrgUnitRow {
   fax?: string | null;
   address?: string | null;
   description?: string | null;
+  // Chỉ chức vụ: trọng số cấp bậc (số lớn = cấp cao, null = chưa xếp cấp) + số nhân sự đang hoạt động.
+  rank_weight?: number | null;
+  employee_count?: number;
 }
 export const searchOrgUnits = (kind: OrgUnitKind, body: { pageIndex: number; pageSize: number; search_content?: string }) =>
   post<Paged<OrgUnitRow>>(`admin/org/${kind}/search`, body);
@@ -396,23 +399,56 @@ export const upsertOrgRole = (payload: Partial<Omit<OrgRole, 'role_id'>> & { rol
 export const deleteOrgRoles = (role_ids: string[]) => post<OkMessage>('admin/org/roles/delete', { role_ids });
 
 export type SyncTarget = 'finance' | 'task' | 'chat' | 'meeting';
+export type SyncRowStatus = 'pending' | 'done' | 'failed' | 'skipped';
+export type SyncEntity = 'user' | 'user_roles' | 'branch' | 'department' | 'position' | 'role';
+export interface SyncTargetSummary {
+  target: SyncTarget;
+  pending: number;
+  retrying: number;
+  failed: number;
+  head_error: string | null;
+  head_attempts: number | null;
+  head_next_retry_at: string | null;
+  oldest_pending: string | null;
+  last_done_at: string | null;
+}
 export interface SyncStatus {
   enabled_targets: SyncTarget[];
-  summary: { target: SyncTarget; pending: number; failed: number; last_error: string | null; oldest_pending: string | null }[];
-  failed: {
-    id: string;
-    target: SyncTarget;
-    entity: string;
-    op: string;
-    entity_id: string;
-    attempts: number;
-    last_error: string | null;
-    updated_at: string;
-  }[];
+  summary: SyncTargetSummary[];
+}
+export interface SyncLogRow {
+  id: string;
+  target: SyncTarget;
+  entity: SyncEntity;
+  op: 'upsert' | 'delete';
+  entity_id: string;
+  entity_label: string | null;
+  status: SyncRowStatus;
+  attempts: number;
+  last_error: string | null;
+  note: string | null;
+  next_retry_at: string;
+  created_at: string;
+  updated_at: string;
+  created_by: string | null;
+  created_by_name: string | null;
+}
+export interface SyncHistoryFilter {
+  target?: SyncTarget | null;
+  status?: SyncRowStatus | null;
+  entity?: SyncEntity | null;
+  search?: string | null;
+  pageIndex: number;
+  pageSize: number;
 }
 export const getSyncStatus = () => get<SyncStatus>('admin/org/sync/status');
-export const retrySync = (target?: SyncTarget | null) =>
-  post<OkMessage & { count: number }>('admin/org/sync/retry', { target: target ?? null });
+export const getSyncHistory = (filter: SyncHistoryFilter) =>
+  post<{ totalItems: number; page: number; pageSize: number; data: SyncLogRow[] }>('admin/org/sync/history', filter);
+// Theo đích (target, null = mọi đích) hoặc theo danh sách id dòng nhật ký.
+export const retrySync = (by: { target?: SyncTarget | null; ids?: string[] | null }) =>
+  post<OkMessage & { count: number }>('admin/org/sync/retry', by);
+export const skipSync = (by: { target?: SyncTarget | null; ids?: string[] | null }) =>
+  post<OkMessage & { count: number }>('admin/org/sync/skip', by);
 export const resyncTarget = (target: SyncTarget) =>
   post<OkMessage & { count: number }>('admin/org/sync/resync', { target });
 
@@ -420,6 +456,7 @@ export const resyncTarget = (target: SyncTarget) =>
 export interface Branding {
   org_name: string;
   short_name: string;
+  show_short_name: boolean;
   app_name: string;
   tagline: string | null;
   login_heading: string | null;
@@ -468,6 +505,24 @@ export interface SsoSession {
 export const getSessions = () => get<SsoSession[]>('account/sessions');
 export const revokeSessionRequest = (session_id: string) =>
   post<{ success: boolean; message: string }>('account/sessions/revoke', { session_id });
+
+// Quản trị: phiên đang hoạt động của mọi người (20/10/2026).
+export interface AdminSessionUser {
+  user_id: string;
+  user_name: string;
+  full_name: string | null;
+  session_count: number;
+  last_seen_at: string;
+  sessions: SsoSession[];
+}
+export const getAdminSessions = (params: { q: string; page: number; page_size: number }) =>
+  get<{ items: AdminSessionUser[]; total: number; page: number; page_size: number }>(
+    `admin/sessions?${new URLSearchParams({ q: params.q, page: String(params.page), page_size: String(params.page_size) })}`,
+  );
+export const adminRevokeSession = (session_id: string) =>
+  post<OkMessage>('admin/sessions/revoke', { session_id });
+export const adminRevokeUserSessions = (user_id: string) =>
+  post<OkMessage>('admin/sessions/revoke-user', { user_id });
 
 // Ảnh avatar. Từ 09/09/2026 api-sso (/me, /account/profile) đã trả URL sẵn
 // sàng ("/api/api-sso/uploads/..." hoặc "/api/api-core/uploads/...") - hàm này

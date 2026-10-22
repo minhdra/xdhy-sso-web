@@ -2,6 +2,7 @@ import { MinusCircleOutlined, PlusOutlined, UndoOutlined, UploadOutlined } from 
 import {
   App as AntdApp,
   Button,
+  Checkbox,
   Col,
   ColorPicker,
   Form,
@@ -24,7 +25,7 @@ import {
   updateBranding,
   uploadBrandingImage,
 } from '../../api';
-import { DEFAULT_LOGO, footerText, useBrandingStore } from '../../store/branding';
+import { DEFAULT_BRANDING, DEFAULT_LOGO, footerText, useBrandingStore } from '../../store/branding';
 import { maxLen, RULES_FORM } from '../../validator';
 
 const IMAGES: { kind: BrandingImageKind; label: string; hint: string; accept: string; box: number }[] = [
@@ -196,7 +197,17 @@ export default function BrandingAdminPanel() {
             </Form.Item>
           </Col>
           <Col xs={24} md={6}>
-            <Form.Item name="short_name" label="Tên viết tắt" validateFirst rules={[...RULES_FORM.required, ...RULES_FORM.text, maxLen(50)]}>
+            <Form.Item
+              name="short_name"
+              label="Tên viết tắt"
+              validateFirst
+              rules={[...RULES_FORM.required, ...RULES_FORM.text, maxLen(50)]}
+              extra={
+                <Form.Item name="show_short_name" valuePropName="checked" noStyle>
+                  <Checkbox>Hiện cạnh logo</Checkbox>
+                </Form.Item>
+              }
+            >
               <Input placeholder="vd: ABC" />
             </Form.Item>
           </Col>
@@ -211,8 +222,19 @@ export default function BrandingAdminPanel() {
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
-            <Form.Item name="primary_color" label="Màu chủ đạo" rules={RULES_FORM.required}>
-              <ColorPicker showText format="hex" disabledAlpha />
+            <Form.Item label="Màu chủ đạo">
+              <Space>
+                <Form.Item name="primary_color" noStyle rules={RULES_FORM.required}>
+                  <ColorPicker showText format="hex" disabledAlpha />
+                </Form.Item>
+                <Button
+                  icon={<UndoOutlined />}
+                  disabled={previewColor.toLowerCase() === DEFAULT_BRANDING.primary_color}
+                  onClick={() => form.setFieldValue('primary_color', DEFAULT_BRANDING.primary_color)}
+                >
+                  Màu mặc định
+                </Button>
+              </Space>
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
@@ -221,7 +243,7 @@ export default function BrandingAdminPanel() {
             </Form.Item>
           </Col>
           <Col xs={24} md={12}>
-            <Form.Item name="footer_text" validateFirst rules={[...RULES_FORM.text, maxLen(250)]} label="Chân trang" tooltip="Dùng {year} để tự hiện năm hiện tại.">
+            <Form.Item name="footer_text" validateFirst rules={[...RULES_FORM.footerText, maxLen(250)]} label="Chân trang" tooltip="Dùng {year} để tự hiện năm hiện tại.">
               <Input placeholder="vd: © {year} Công ty ABC. All rights reserved." maxLength={250} />
             </Form.Item>
           </Col>

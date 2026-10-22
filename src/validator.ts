@@ -20,6 +20,19 @@ export const RULES_FORM = {
     { pattern: /^(?![\s\S]*[^\S\n]{2,})[\s\S]*$/, message: 'Không nhiều khoảng trắng liên tiếp' },
     { pattern: /^(?![\s\S]*[<>{}[\]\\`~])[\s\S]*$/, message: 'Không chứa ký tự < > { } [ ] \\ ` ~' },
   ] satisfies FormRule[],
+  // Chân trang: như `text` nhưng cho phép đúng token {year} (tự thay bằng năm
+  // hiện tại, xem footerText ở store/branding). `{`/`}` khác vẫn bị chặn.
+  footerText: [
+    { pattern: /^(?!\s)[\s\S]*(?<!\s)$/, message: 'Không để khoảng trắng đầu/cuối' },
+    { pattern: /^(?![\s\S]*[^\S\n]{2,})[\s\S]*$/, message: 'Không nhiều khoảng trắng liên tiếp' },
+    { pattern: /^(?![\s\S]*[<>[\]\\`~])[\s\S]*$/, message: 'Không chứa ký tự < > [ ] \\ ` ~' },
+    {
+      validator: (_rule, value?: string) =>
+        /[{}]/.test((value ?? '').replace(/\{year\}/g, ''))
+          ? Promise.reject(new Error('Chỉ dùng {year}, không dùng { } khác'))
+          : Promise.resolve(),
+    },
+  ] satisfies FormRule[],
   // Họ tên người: chỉ chữ (có dấu) và khoảng trắng.
   personName: [
     { pattern: /^[\p{L}]+( [\p{L}]+)*$/u, message: 'Họ tên chỉ gồm chữ cái, cách nhau 1 khoảng trắng' },
