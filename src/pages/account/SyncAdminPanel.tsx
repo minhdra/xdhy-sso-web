@@ -33,6 +33,7 @@ import {
   type SyncStatus,
   type SyncTarget,
 } from '../../api';
+import { tableScrollY } from '../../tableScroll';
 
 const TARGETS: { key: SyncTarget; label: string }[] = [
   { key: 'finance', label: 'Tài chính' },
@@ -369,7 +370,7 @@ export default function SyncAdminPanel() {
         loading={logsLoading}
         dataSource={logs}
         tableLayout="fixed"
-        scroll={{ x: 720 }}
+        scroll={{ x: 720, y: tableScrollY(140) }}
         locale={{ emptyText: 'Chưa có nhật ký đồng bộ' }}
         rowSelection={{
           selectedRowKeys: selected,

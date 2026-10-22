@@ -11,15 +11,14 @@ import {
   Typography,
   theme as antdTheme,
 } from 'antd';
-import lottie from 'lottie-web/build/player/lottie_light';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import loginBadge from '../assets/login-badge.json';
 import { forgotPasswordRequest, getMe, loginRequest, refreshRequest } from '../api';
 import { PageLoading } from '../components/PageLoading';
 import { footerText, logoFor, useBrandingStore } from '../store/branding';
 import { BrandName } from '../components/BrandName';
+import { OrgIllustration } from '../components/OrgIllustration';
 import { useThemeStore } from '../store/theme';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useSessionStore } from '../store/session';
@@ -127,21 +126,6 @@ export default function LoginPage() {
 
     void checkSession();
   }, [navigate, redirectTo, setSessionUser]);
-
-  const illustrationRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (checkingSession) return;
-    if (!illustrationRef.current) return;
-    const anim = lottie.loadAnimation({
-      container: illustrationRef.current,
-      renderer: 'svg',
-      loop: true,
-      autoplay: true,
-      animationData: loginBadge,
-    });
-    anim.setSpeed(0.5);
-    return () => anim.destroy();
-  }, [checkingSession]);
 
   const handleLogin = async (values: { username: string; password: string; remember?: boolean }) => {
     setLoginLoading(true);
@@ -276,7 +260,12 @@ export default function LoginPage() {
                         <Form.Item name="remember" valuePropName="checked" noStyle initialValue={true}>
                           <Checkbox>Ghi nhớ đăng nhập</Checkbox>
                         </Form.Item>
-                        <Typography.Link onClick={() => setView('forgot')}>Quên mật khẩu?</Typography.Link>
+                        <Typography.Link
+                          onClick={() => setView('forgot')}
+                          style={{ color: token.colorPrimary, fontWeight: 600 }}
+                        >
+                          Quên mật khẩu?
+                        </Typography.Link>
                       </Flex>
                       <Button
                         type="primary"
@@ -351,7 +340,9 @@ export default function LoginPage() {
             {branding.login_heading && <h2>{branding.login_heading}</h2>}
             {branding.login_description && <p>{branding.login_description}</p>}
           </div>
-          <div ref={illustrationRef} className="illustrationAnim" />
+          <div className="illustrationAnim">
+            <OrgIllustration />
+          </div>
         </div>
       </div>
     </div>

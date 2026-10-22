@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { deleteOrgUnits, type OrgUnitKind, type OrgUnitRow, searchOrgUnits, upsertOrgUnit } from '../../api';
 import { maxLen, RULES_FORM } from '../../validator';
+import { TABLE_SCROLL_Y } from '../../tableScroll';
 
 const PAGE_SIZE = 20;
 
@@ -176,7 +177,7 @@ export default function OrgUnitsAdminPanel() {
         size="small"
         loading={loading}
         dataSource={rows}
-        scroll={{ x: 520 }}
+        scroll={{ x: 520, y: TABLE_SCROLL_Y }}
         pagination={{ current: page, pageSize: PAGE_SIZE, total, showSizeChanger: false, onChange: setPage }}
         columns={[
           { title: cfg.label, key: 'name', render: (_, r) => <strong>{r[cfg.nameKey] as string}</strong> },

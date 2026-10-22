@@ -11,6 +11,7 @@ import {
 } from '../../api';
 import { useSessionStore } from '../../store/session';
 import { describeAgent, displayIp, relativeTime } from './SessionsPanel';
+import { TABLE_SCROLL_Y } from '../../tableScroll';
 
 const PAGE_SIZE = 20;
 
@@ -138,7 +139,7 @@ export default function AllSessionsPanel({ toolbar }: { toolbar?: ReactNode }) {
         rowKey="user_id"
         loading={loading}
         dataSource={rows}
-        scroll={{ x: 560 }}
+        scroll={{ x: 560, y: TABLE_SCROLL_Y }}
         locale={{ emptyText: <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Không có phiên nào" /> }}
         pagination={{ current: page, pageSize: PAGE_SIZE, total, showSizeChanger: false, onChange: setPage }}
         expandable={{ expandedRowRender: sessionRows, rowExpandable: (u) => u.sessions.length > 0 }}

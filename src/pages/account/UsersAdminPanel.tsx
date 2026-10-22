@@ -50,6 +50,7 @@ import { avatarColor } from '../../avatarColor';
 import { resizeImage } from '../../imageResize';
 import { useSessionStore } from '../../store/session';
 import { capitalizeName, maxLen, RULES_FORM } from '../../validator';
+import { TABLE_SCROLL_Y } from '../../tableScroll';
 
 interface UserFormValues {
   user_name?: string;
@@ -462,7 +463,7 @@ export default function UsersAdminPanel() {
         // "Người dùng" rộng nhất để họ tên ít xuống dòng; chữ dài ở các cột
         // khác tự xuống dòng (ssoOrg-cell--wrap) thay vì bị che.
         tableLayout="fixed"
-        scroll={{ x: 684 }}
+        scroll={{ x: 684, y: TABLE_SCROLL_Y }}
         pagination={{
           current: page,
           pageSize: PAGE_SIZE,

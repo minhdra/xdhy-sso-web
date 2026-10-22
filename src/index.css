@@ -392,7 +392,10 @@ body {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.15));
+  width: auto;
+  height: auto;
+  border-radius: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.2));
 }
 .illustrationSide.has-image .illustrationAnim {
   display: none;
@@ -423,8 +426,112 @@ body {
   width: 100%;
   max-width: 340px;
   height: auto;
-  /* Lật ngang animation cho nhân vật quay về phía form - đúng bản gốc. */
-  transform: scaleX(-1);
+}
+.buildingIllus {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.buildingIllus-body {
+  fill: rgba(255, 255, 255, 0.9);
+}
+.buildingIllus text,
+.buildingIllus-steel {
+  fill: rgba(255, 255, 255, 0.95);
+}
+.buildingIllus-ground {
+  fill: rgba(255, 255, 255, 0.55);
+}
+.buildingIllus-win {
+  fill: var(--color-primary);
+  opacity: 0.35;
+  animation: buildingWin 5.6s ease-in-out infinite;
+}
+.buildingIllus-beacon {
+  fill: #ffd666;
+  animation: buildingBeacon 1.8s ease-in-out infinite;
+}
+
+.orgIllus-link {
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 5;
+  animation: orgLink 2.4s linear infinite;
+}
+.orgIllus-ring {
+  fill: rgba(255, 255, 255, 0.18);
+  stroke: rgba(255, 255, 255, 0.8);
+  stroke-width: 1.5;
+}
+.orgIllus-node {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: orgNode 3.2s ease-in-out infinite;
+}
+.orgIllus-shade {
+  fill: rgba(0, 0, 0, 0.1);
+}
+.orgIllus-shadow {
+  fill: rgba(0, 0, 0, 0.18);
+}
+.orgIllus-glass {
+  fill: var(--color-primary);
+  opacity: 0.55;
+}
+.orgIllus-door {
+  fill: var(--color-primary);
+  opacity: 0.8;
+}
+.orgIllus-mullion {
+  stroke: rgba(255, 255, 255, 0.9);
+  stroke-width: 1.5;
+}
+.orgIllus-tree rect {
+  fill: rgba(255, 255, 255, 0.7);
+}
+.orgIllus-tree circle {
+  fill: rgba(255, 255, 255, 0.45);
+}
+.orgIllus-shine {
+  fill: rgba(255, 255, 255, 0.5);
+}
+.orgIllus-wall {
+  fill: rgba(0, 0, 0, 0.12);
+}
+.orgIllus-flag {
+  fill: #ffd666;
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: orgFlag 2.4s ease-in-out infinite alternate;
+}
+.buildingIllus-glasswin {
+  opacity: 0.55;
+}
+@keyframes orgFlag {
+  from { transform: scaleX(1) skewY(0deg); }
+  to { transform: scaleX(0.82) skewY(6deg); }
+}
+@keyframes orgLink {
+  to { stroke-dashoffset: -18; }
+}
+@keyframes orgNode {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+@keyframes buildingWin {
+  0%, 35% { opacity: 0.3; }
+  50%, 80% { opacity: 1; fill: #ffe08a; }
+  100% { opacity: 0.3; }
+}
+@keyframes buildingBeacon {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .buildingIllus * {
+    animation: none !important;
+  }
 }
 
 /* Toast "Đăng nhập thành công" - copy nguyên từ
@@ -562,7 +669,7 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
 .ssoHeader-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0;
   background: none;
   border: 0;
   cursor: pointer;
@@ -583,27 +690,17 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
   outline: 3px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
   outline-offset: 2px;
 }
-/* Tên viết tắt cạnh logo: gradient theo màu chủ đạo (tab Thương hiệu) + vạch
-   ngăn mảnh với logo. Màu chữ thường là dự phòng khi trình duyệt không hỗ trợ
+/* Tên viết tắt cạnh logo: gradient theo màu chủ đạo (tab Thương hiệu), sát logo,
+   không vạch ngăn. Màu chữ thường là dự phòng khi trình duyệt không hỗ trợ
    background-clip: text. */
 .brandName {
-  position: relative;
-  padding-left: 12px;
+  padding-left: 8px;
   white-space: nowrap;
   font-size: 1.375rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   line-height: 1;
   color: var(--color-primary);
-}
-.brandName::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  height: 26px;
-  border-left: 1px solid color-mix(in srgb, var(--color-primary) 35%, transparent);
-  transform: translateY(-50%);
 }
 @supports (background-clip: text) or (-webkit-background-clip: text) {
   .brandName {
@@ -621,9 +718,6 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
 /* Nền tối: sắc đậm của màu chủ đạo chìm vào nền -> dùng dải sáng hơn. */
 :root[data-theme="dark"] .brandName {
   color: color-mix(in srgb, var(--color-primary) 55%, #fff);
-}
-:root[data-theme="dark"] .brandName::before {
-  border-left-color: color-mix(in srgb, var(--color-primary) 40%, #fff 30%);
 }
 @supports (background-clip: text) or (-webkit-background-clip: text) {
   :root[data-theme="dark"] .brandName {
@@ -1011,6 +1105,9 @@ icon ~24px - icon badge 34px của mình rộng hơn nên phải tự nới marg
   display: grid;
   gap: 16px;
   margin-top: 22px;
+  /* Cuộn trong khung thay vì kéo dài cả trang khi có nhiều phiên. */
+  max-height: max(300px, calc(100vh - 360px));
+  overflow-y: auto;
 }
 .ssoSessionGroup {
   overflow: hidden;
